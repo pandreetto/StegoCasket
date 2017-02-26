@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">StegoCasket</string>
+    <string name="action_settings">Settings</string>
+    <string name="pwd_text">Password</string>
+    <string name="ok_btn">Ok</string>
+    <string name="cancel_btn">Cancel</string>
+    <string name="repwd_text">Confrim password</string>
+</resources>
