@@ -14,6 +14,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
+import org.apache.stegocasket.core.Secret;
+import org.apache.stegocasket.core.SecretException;
+import org.apache.stegocasket.core.SecretManager;
+
 public class CasketLogin extends AppCompatActivity {
 
     private static final String TAG = "CasketLogin";
@@ -128,9 +132,18 @@ public class CasketLogin extends AppCompatActivity {
     }
 
     public void run(Uri picURI, String pwd, boolean loadMode) {
-        /*
-        TODO implement
-         */
+
+        SecretManager manager = new SecretManager();
+        try {
+            manager.init(this, picURI, pwd, loadMode);
+
+            for (Secret secret : manager.getSecrets()) {
+                Log.d(TAG, "Found secret " + secret.getId());
+            }
+
+        } catch (SecretException e) {
+            Log.e(TAG, e.getMessage(), e);
+        }
     }
 
 }

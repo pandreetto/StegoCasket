@@ -5,4 +5,8 @@
     <string name="ok_btn">Ok</string>
     <string name="cancel_btn">Cancel</string>
     <string name="repwd_text">Confrim password</string>
+    <string name="nocryptofile">Cannot find crypto file</string>
+    <string name="errparsecrypto">Error parsing crypto file</string>
+    <string name="unknwsecret">Secret unknown</string>
+    <string name="nologorpwd">Missing login or password</string>
 </resources>
