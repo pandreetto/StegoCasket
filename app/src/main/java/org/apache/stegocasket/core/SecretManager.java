@@ -7,12 +7,23 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.UUID;
 
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
 
+import android.content.BroadcastReceiver;
+import android.content.ContentProvider;
+import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.pm.ProviderInfo;
+import android.database.Cursor;
+import android.database.MatrixCursor;
 import android.net.Uri;
 import android.util.Log;
 
@@ -20,7 +31,9 @@ import org.apache.stegocasket.R;
 import org.apache.stegocasket.stego.bitmap.StegoCodec;
 import org.apache.stegocasket.crypto.CryptoUtils;
 
-public class SecretManager {
+public class SecretManager extends ContentProvider {
+
+    private static final String TAG = SecretManager.class.getName();
 
     private static final int CACHE_IDLE = 0;
 
@@ -28,13 +41,13 @@ public class SecretManager {
 
     private static final int CACHE_TOFLUSH = 2;
 
-    private Context context;
+    private String rootTable;
 
     private Uri pictureURI;
 
     private String pwd;
 
-    private ArrayList<Secret> secretCache;
+    private LinkedHashMap<String, Secret> secretTable;
 
     private int cacheStatus;
 
@@ -42,94 +55,8 @@ public class SecretManager {
         cacheStatus = CACHE_IDLE;
     }
 
-    public void changePassword(String newPwd)
-            throws SecretException {
-        /*
-         * TODO investigate
-         */
-    }
-
-    public Secret[] getSecrets()
-            throws SecretException {
-
-        if (secretCache == null)
-            loadSecrets();
-
-        Secret[] result = new Secret[secretCache.size()];
-        secretCache.toArray(result);
-        return result;
-
-    }
-
-    public Secret getSecret(String secretId)
-            throws SecretException {
-
-        if (secretCache == null)
-            loadSecrets();
-
-        for (Secret tmpsec : secretCache) {
-            if (tmpsec.getId().equals(secretId)) {
-                return tmpsec;
-            }
-        }
-
-        throw new SecretException(R.string.unknwsecret);
-
-    }
-
-    public void putSecret(Secret secret)
-            throws SecretException {
-
-        if (secretCache == null)
-            loadSecrets();
-
-        int idx = 0;
-        for (Secret secItem : secretCache) {
-            if (secret.getId().equals(secItem.getId())) {
-                break;
-            }
-            idx++;
-        }
-
-        if (idx == secretCache.size()) {
-            secretCache.add(secret);
-        } else {
-            secretCache.set(idx, secret);
-        }
-        cacheStatus = CACHE_TOFLUSH;
-
-    }
-
-    public void removeSecret(String secretId)
-            throws SecretException {
-
-        if (secretCache == null)
-            loadSecrets();
-
-        int idx = 0;
-        for (Secret secItem : secretCache) {
-            if (secretId.equals(secItem.getId())) {
-                break;
-            } else {
-                idx++;
-            }
-        }
-
-        if (idx < secretCache.size()) {
-            secretCache.remove(idx);
-            cacheStatus = CACHE_TOFLUSH;
-        }
-
-    }
-
-    public void removeSecret(Secret secret)
-            throws SecretException {
-        removeSecret(secret.getId());
-    }
-
-    public void flushSecrets()
-            throws SecretException {
-        writeSecrets();
+    private void initSecrets() {
+        secretTable = new LinkedHashMap<String, Secret>();
         cacheStatus = CACHE_STABLE;
     }
 
@@ -142,7 +69,7 @@ public class SecretManager {
 
         try {
 
-            byte[] cryptoData = StegoCodec.decode(context, pictureURI, this.pwd);
+            byte[] cryptoData = StegoCodec.decode(this.getContext(), pictureURI, this.pwd);
 
             Cipher cipher = CryptoUtils.setupCipher(Cipher.DECRYPT_MODE, this.pwd);
 
@@ -152,17 +79,23 @@ public class SecretManager {
 
             parser = new SecretParser(reader);
             parser.parse();
-            secretCache = parser.getSecrets();
+            ArrayList<Secret> secretList = parser.getSecrets();
+
+            secretTable = new LinkedHashMap<String, Secret>(secretList.size());
+            for (Secret tmpsec : secretList) {
+                secretTable.put(UUID.randomUUID().toString(), tmpsec);
+            }
+
             cacheStatus = CACHE_STABLE;
 
         } catch (FileNotFoundException fEx) {
 
-            Log.e(SecretManager.class.getName(), fEx.getMessage(), fEx);
+            Log.e(TAG, fEx.getMessage(), fEx);
             throw new SecretException(R.string.nocryptofile);
 
         } catch (IOException pEx) {
 
-            Log.e(SecretManager.class.getName(), pEx.getMessage(), pEx);
+            Log.e(TAG, pEx.getMessage(), pEx);
             throw new SecretException(R.string.errparsecrypto);
 
         } finally {
@@ -170,7 +103,7 @@ public class SecretManager {
                 try {
                     reader.close();
                 } catch (IOException ioEx) {
-                    Log.e(SecretManager.class.getName(), ioEx.getMessage(), ioEx);
+                    Log.e(TAG, ioEx.getMessage(), ioEx);
                 }
             }
         }
@@ -191,18 +124,19 @@ public class SecretManager {
             CipherOutputStream cOut = new CipherOutputStream(boutStream, cipher);
             writer = new SecretWriter(cOut);
 
-            for (Secret secItem : secretCache) {
+            for (String sUUID : secretTable.keySet()) {
+                Secret secItem = secretTable.get(sUUID);
                 Log.d(SecretManager.class.getName(), secItem.toXML());
                 writer.write(secItem);
             }
             writer.close();
             writer = null;
 
-            StegoCodec.encode(context, pictureURI, boutStream.toByteArray(), this.pwd);
+            StegoCodec.encode(this.getContext(), pictureURI, boutStream.toByteArray(), this.pwd);
 
         } catch (IOException ioEx) {
 
-            Log.e(SecretManager.class.getName(), ioEx.getMessage(), ioEx);
+            Log.e(TAG, ioEx.getMessage(), ioEx);
             throw new SecretException(R.string.nocryptofile);
 
 
@@ -214,25 +148,86 @@ public class SecretManager {
 
     }
 
-    public void init(Context ctx, Uri pictureURI, String pwd, boolean loadOnInit)
-            throws SecretException {
+    @Override
+    public boolean onCreate() {
+        cacheStatus = CACHE_IDLE;
+        rootTable = null;
 
-        if (pictureURI == null || pwd == null || pwd.trim().length() == 0) {
+        return true;
+    }
 
-            throw new SecretException(R.string.nologorpwd);
+    @Override
+    public Cursor query(Uri uri,
+                        String[] projection,
+                        String selection,
+                        String[] selectionArgs,
+                        String sortOrder) {
+        if (!uri.getAuthority().equals(SecretManagerContract.AUTHORITY)) {
+            throw new IllegalArgumentException();
+        }
+
+        if (uri.getPath().equals("/" + rootTable)) {
+            String[] columns = new String[]{"_ID", SecretManagerContract.SEC_NAME_FIELD};
+            MatrixCursor cursor = new MatrixCursor(columns);
+            for (String sUUID : secretTable.keySet()) {
+                cursor.addRow(new Object[]{sUUID, secretTable.get(sUUID).getId()});
+            }
+            return cursor;
+        }
+
+        return null;
+    }
+
+    @Override
+    public Uri insert(Uri uri, ContentValues values) {
+        return null;
+    }
+
+    @Override
+    public int update(Uri uri,
+                      ContentValues values,
+                      String selection,
+                      String[] selectionArgs) {
+
+        if (!uri.getAuthority().equals(SecretManagerContract.AUTHORITY)) {
+            return 0;
+        }
+
+        if (uri.getPath().equals("/root")) {
+
+            pictureURI = Uri.parse(values.getAsString(SecretManagerContract.PICTURE_FIELD));
+            pwd = values.getAsString(SecretManagerContract.PWD_FIELD);
+            boolean loadOnInit = values.getAsBoolean(SecretManagerContract.LOAD_FIELD);
+            rootTable = values.getAsString(SecretManagerContract.ROOT_ID_FIELD);
+
+            try {
+
+                if (loadOnInit) {
+                    loadSecrets();
+                } else {
+                    initSecrets();
+                }
+
+                return 1;
+            } catch (Exception ex) {
+                Log.e(SecretManager.class.getName(), ex.getMessage(), ex);
+            }
 
         }
 
-        this.context = ctx;
-        this.pictureURI = pictureURI;
-        this.pwd = pwd;
-        if (loadOnInit) {
-            loadSecrets();
-        } else {
-            secretCache = new ArrayList<Secret>();
-            cacheStatus = CACHE_STABLE;
-        }
+        return 0;
+    }
 
+    @Override
+    public int delete(Uri uri,
+                      String selection,
+                      String[] selectionArgs) {
+        return 0;
+    }
+
+    @Override
+    public String getType(Uri uri) {
+        return null;
     }
 
 }

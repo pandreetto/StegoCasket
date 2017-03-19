@@ -2,12 +2,14 @@ package org.apache.stegocasket;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -17,6 +19,9 @@ import android.view.View;
 import org.apache.stegocasket.core.Secret;
 import org.apache.stegocasket.core.SecretException;
 import org.apache.stegocasket.core.SecretManager;
+import org.apache.stegocasket.core.SecretManagerContract;
+
+import java.util.UUID;
 
 public class CasketLogin extends AppCompatActivity {
 
@@ -133,17 +138,23 @@ public class CasketLogin extends AppCompatActivity {
 
     public void run(Uri picURI, String pwd, boolean loadMode) {
 
-        SecretManager manager = new SecretManager();
-        try {
-            manager.init(this, picURI, pwd, loadMode);
+        String rootUUID = UUID.randomUUID().toString();
 
-            for (Secret secret : manager.getSecrets()) {
-                Log.d(TAG, "Found secret " + secret.getId());
-            }
+        ContentValues values = new ContentValues();
+        values.put(SecretManagerContract.PICTURE_FIELD, picURI.toString());
+        values.put(SecretManagerContract.PWD_FIELD, pwd);
+        values.put(SecretManagerContract.LOAD_FIELD, loadMode);
+        values.put(SecretManagerContract.ROOT_ID_FIELD, rootUUID);
 
-        } catch (SecretException e) {
-            Log.e(TAG, e.getMessage(), e);
+        String rootTableURI = "content://" + SecretManagerContract.AUTHORITY + SecretManagerContract.ROOT_PATH;
+
+        int result = this.getContentResolver().update(Uri.parse(rootTableURI), values, "", new String[0]);
+        if (result == 0) {
+            /*
+            TODO error
+             */
         }
+
     }
 
 }
