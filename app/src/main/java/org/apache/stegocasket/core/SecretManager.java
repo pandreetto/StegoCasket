@@ -1,5 +1,16 @@
 package org.apache.stegocasket.core;
 
+import android.content.ContentProvider;
+import android.content.ContentValues;
+import android.database.Cursor;
+import android.database.MatrixCursor;
+import android.net.Uri;
+import android.util.Log;
+
+import org.apache.stegocasket.R;
+import org.apache.stegocasket.crypto.CryptoUtils;
+import org.apache.stegocasket.stego.bitmap.StegoCodec;
+
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -7,29 +18,12 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.UUID;
 
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
-
-import android.content.BroadcastReceiver;
-import android.content.ContentProvider;
-import android.content.ContentValues;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.pm.ProviderInfo;
-import android.database.Cursor;
-import android.database.MatrixCursor;
-import android.net.Uri;
-import android.util.Log;
-
-import org.apache.stegocasket.R;
-import org.apache.stegocasket.stego.bitmap.StegoCodec;
-import org.apache.stegocasket.crypto.CryptoUtils;
 
 public class SecretManager extends ContentProvider {
 

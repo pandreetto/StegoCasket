@@ -9,16 +9,12 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
-import org.apache.stegocasket.core.Secret;
-import org.apache.stegocasket.core.SecretException;
-import org.apache.stegocasket.core.SecretManager;
 import org.apache.stegocasket.core.SecretManagerContract;
 
 import java.util.UUID;
@@ -109,8 +105,6 @@ public class CasketLogin extends AppCompatActivity {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent resultData) {
 
-        String pictureName = null;
-
         if (resultCode != Activity.RESULT_OK || resultData == null) {
             return;
         }
@@ -154,6 +148,10 @@ public class CasketLogin extends AppCompatActivity {
             TODO error
              */
         }
+
+        Intent intent = new Intent(this, SecretList.class);
+        intent.putExtra(CasketConstants.ROOT_UUID, rootUUID);
+        startActivity(intent);
 
     }
 

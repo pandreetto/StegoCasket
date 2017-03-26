@@ -9,4 +9,5 @@
     <string name="errparsecrypto">Error parsing crypto file</string>
     <string name="unknwsecret">Secret unknown</string>
     <string name="nologorpwd">Missing login or password</string>
+    <string name="title_activity_secret_list">SecretList</string>
 </resources>
