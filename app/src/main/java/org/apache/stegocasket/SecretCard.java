@@ -6,6 +6,8 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.helper.ItemTouchHelper;
+import android.util.Log;
 import android.view.View;
 
 public class SecretCard extends AppCompatActivity {
@@ -38,6 +40,21 @@ public class SecretCard extends AppCompatActivity {
         secRecyclerView.setLayoutManager(secLayoutManager);
         secRecyclerView.setAdapter(secAdapter);
 
+        ItemTouchHelper.SimpleCallback sCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.RIGHT) {
+
+            @Override
+            public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder,
+                                  RecyclerView.ViewHolder target) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(RecyclerView.ViewHolder viewHolder, int swipeDir) {
+            }
+        };
+
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(sCallback);
+        itemTouchHelper.attachToRecyclerView(secRecyclerView);
     }
 
 }

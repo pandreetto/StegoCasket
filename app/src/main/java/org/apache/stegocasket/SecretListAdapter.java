@@ -50,7 +50,7 @@ class SecretListAdapter extends RecyclerView.Adapter<SecretListAdapter.ViewHolde
 
         TextView tView = (TextView) holder.secLayout.findViewById(R.id.secret_name);
         tView.setText(sName);
-        tView.setHint(sUUID);
+        tView.setTag(sUUID);
     }
 
     @Override
