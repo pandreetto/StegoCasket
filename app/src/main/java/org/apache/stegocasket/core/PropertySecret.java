@@ -1,6 +1,5 @@
 package org.apache.stegocasket.core;
 
-import org.apache.stegocasket.R;
 import org.xml.sax.Attributes;
 
 public class PropertySecret
@@ -21,14 +20,6 @@ public class PropertySecret
 
     public String getId() {
         return key;
-    }
-
-    public int getLayoutId() {
-        /*
-        TODO define secret layout
-         */
-        //return R.layout.secretprop;
-        return 0;
     }
 
     public void setId(String id) {

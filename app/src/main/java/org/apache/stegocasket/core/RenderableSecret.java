@@ -7,6 +7,4 @@ public interface RenderableSecret
 
     public void setValue(String value);
 
-    public int getLayoutId();
-
 }

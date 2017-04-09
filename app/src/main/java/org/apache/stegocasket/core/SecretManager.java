@@ -5,6 +5,7 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.net.Uri;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import org.apache.stegocasket.R;
@@ -59,8 +60,6 @@ public class SecretManager extends ContentProvider {
 
         BufferedReader reader = null;
 
-        SecretParser parser = null;
-
         try {
 
             byte[] cryptoData = StegoCodec.decode(this.getContext(), pictureURI, this.pwd);
@@ -71,7 +70,7 @@ public class SecretManager extends ContentProvider {
             CipherInputStream cIn = new CipherInputStream(binStream, cipher);
             reader = new BufferedReader(new InputStreamReader(cIn));
 
-            parser = new SecretParser(reader);
+            SecretParser parser = new SecretParser(reader);
             parser.parse();
             ArrayList<Secret> secretList = parser.getSecrets();
 
@@ -151,7 +150,7 @@ public class SecretManager extends ContentProvider {
     }
 
     @Override
-    public Cursor query(Uri uri,
+    public Cursor query(@NonNull Uri uri,
                         String[] projection,
                         String selection,
                         String[] selectionArgs,
@@ -161,10 +160,33 @@ public class SecretManager extends ContentProvider {
         }
 
         if (uri.getPath().equals("/" + rootTable)) {
-            String[] columns = new String[]{"_ID", SecretManagerContract.SEC_NAME_FIELD};
+            String[] columns = new String[]{
+                    SecretManagerContract.SEC_ID_FIELD,
+                    SecretManagerContract.SEC_NAME_FIELD
+            };
             MatrixCursor cursor = new MatrixCursor(columns);
             for (String sUUID : secretTable.keySet()) {
                 cursor.addRow(new Object[]{sUUID, secretTable.get(sUUID).getId()});
+            }
+            return cursor;
+        }
+
+        String secUUID = uri.getPath().substring(1);
+        if (secretTable.containsKey(secUUID)) {
+            String[] columns = new String[]{
+                    SecretManagerContract.SEC_KEY_FIELD,
+                    SecretManagerContract.SEC_VALUE_FIELD,
+                    SecretManagerContract.SEC_TYPE_FIELD
+            };
+            MatrixCursor cursor = new MatrixCursor(columns);
+            GroupOfSecret gSecrets = (GroupOfSecret) secretTable.get(secUUID);
+            for (Secret tmpsec : gSecrets) {
+                RenderableSecret rSecret = (RenderableSecret) tmpsec;
+                cursor.addRow(new Object[]{
+                        rSecret.getId(),
+                        rSecret.getValue(),
+                        "" // TODO missing type
+                });
             }
             return cursor;
         }
@@ -173,12 +195,12 @@ public class SecretManager extends ContentProvider {
     }
 
     @Override
-    public Uri insert(Uri uri, ContentValues values) {
+    public Uri insert(@NonNull Uri uri, ContentValues values) {
         return null;
     }
 
     @Override
-    public int update(Uri uri,
+    public int update(@NonNull Uri uri,
                       ContentValues values,
                       String selection,
                       String[] selectionArgs) {
@@ -213,14 +235,14 @@ public class SecretManager extends ContentProvider {
     }
 
     @Override
-    public int delete(Uri uri,
+    public int delete(@NonNull Uri uri,
                       String selection,
                       String[] selectionArgs) {
         return 0;
     }
 
     @Override
-    public String getType(Uri uri) {
+    public String getType(@NonNull Uri uri) {
         return null;
     }
 

@@ -14,6 +14,14 @@ public final class SecretManagerContract {
 
     public static final String ROOT_ID_FIELD = "rootUUID";
 
+    public static final String SEC_ID_FIELD = "_ID";
+
     public static final String SEC_NAME_FIELD = "name";
+
+    public static final String SEC_KEY_FIELD = "key";
+
+    public static final String SEC_VALUE_FIELD = "value";
+
+    public static final String SEC_TYPE_FIELD = "type";
 
 }
