@@ -27,10 +27,15 @@ class SecretListAdapter extends RecyclerView.Adapter<SecretListAdapter.ViewHolde
 
     private Cursor intCursor;
 
+    private Context context;
+
+    private String rUUID;
+
     SecretListAdapter(Context ctx, String rUUID) {
 
-        Uri mainTable = Uri.parse("content://" + SecretManagerContract.AUTHORITY + "/" + rUUID);
-        intCursor = ctx.getContentResolver().query(mainTable, new String[]{}, "", new String[]{}, "");
+        intCursor = null;
+        context = ctx;
+        this.rUUID = rUUID;
 
     }
 
@@ -44,6 +49,9 @@ class SecretListAdapter extends RecyclerView.Adapter<SecretListAdapter.ViewHolde
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
+
+        loadCursor();
+
         intCursor.moveToPosition(position);
         String sUUID = intCursor.getString(intCursor.getColumnIndex(SecretManagerContract.SEC_ID_FIELD));
         String sName = intCursor.getString(intCursor.getColumnIndex(SecretManagerContract.SEC_NAME_FIELD));
@@ -55,7 +63,25 @@ class SecretListAdapter extends RecyclerView.Adapter<SecretListAdapter.ViewHolde
 
     @Override
     public int getItemCount() {
+        loadCursor();
         return intCursor.getCount();
+    }
+
+    public void reset() {
+
+        /*
+        TODO find a better way
+         */
+        intCursor = null;
+    }
+
+    private void loadCursor() {
+
+        if (intCursor == null) {
+            Uri mainTable = Uri.parse("content://" + SecretManagerContract.AUTHORITY + "/" + rUUID);
+            intCursor = context.getContentResolver().query(mainTable, new String[]{}, "", new String[]{}, "");
+        }
+
     }
 
 }

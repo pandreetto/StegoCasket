@@ -1,14 +1,23 @@
 <resources>
     <string name="app_name">StegoCasket</string>
     <string name="action_settings">Settings</string>
-    <string name="pwd_text">Password</string>
+    <string name="title_activity_secret_list">SecretList</string>
+    <string name="title_activity_secret_card">SecretCard</string>
+
     <string name="ok_btn">Ok</string>
     <string name="cancel_btn">Cancel</string>
+    <string name="remove_btn">Remove</string>
+
+    <string name="pwd_text">Password</string>
     <string name="repwd_text">Confrim password</string>
+    <string name="enter_seckey">Enter secret ID</string>
+
     <string name="nocryptofile">Cannot find crypto file</string>
     <string name="errparsecrypto">Error parsing crypto file</string>
     <string name="unknwsecret">Secret unknown</string>
     <string name="nologorpwd">Missing login or password</string>
-    <string name="title_activity_secret_list">SecretList</string>
-    <string name="title_activity_secret_card">SecretCard</string>
+
+    <string name="ok_delete_sec">Delete secret?</string>
+    <string name="ok_delete_pro">Delete property?</string>
+
 </resources>

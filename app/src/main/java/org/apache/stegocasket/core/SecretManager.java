@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.TreeMap;
 import java.util.UUID;
 
 import javax.crypto.Cipher;
@@ -196,7 +197,26 @@ public class SecretManager extends ContentProvider {
 
     @Override
     public Uri insert(@NonNull Uri uri, ContentValues values) {
-        return null;
+
+        if (!uri.getAuthority().equals(SecretManagerContract.AUTHORITY)) {
+            return null;
+        }
+
+        String gSecUUID = uri.getPath().substring(1);
+        if (secretTable.containsKey(gSecUUID)) {
+            Log.e(TAG, "UUID already exists");
+            return null;
+        }
+
+        String secId = values.getAsString(SecretManagerContract.SEC_NAME_FIELD);
+
+        Log.d(TAG, "Inserted " + gSecUUID + ": " + secId);
+        GroupOfSecret gSecrets = new GroupOfSecret();
+        gSecrets.setId(secId);
+        secretTable.put(gSecUUID, gSecrets);
+        cacheStatus = CACHE_TOFLUSH;
+
+        return uri;
     }
 
     @Override
@@ -209,24 +229,51 @@ public class SecretManager extends ContentProvider {
             return 0;
         }
 
+        /*
+        Control commands for the content provider
+         */
         if (uri.getPath().equals("/root")) {
 
-            pictureURI = Uri.parse(values.getAsString(SecretManagerContract.PICTURE_FIELD));
-            pwd = values.getAsString(SecretManagerContract.PWD_FIELD);
-            boolean loadOnInit = values.getAsBoolean(SecretManagerContract.LOAD_FIELD);
-            rootTable = values.getAsString(SecretManagerContract.ROOT_ID_FIELD);
+            String cmd = values.getAsString(SecretManagerContract.CMD_FIELD);
 
-            try {
+            if (cmd.equals(SecretManagerContract.INIT_CMD)) {
 
-                if (loadOnInit) {
-                    loadSecrets();
-                } else {
-                    initSecrets();
+                /*
+                Content provider initialization
+                 */
+                pictureURI = Uri.parse(values.getAsString(SecretManagerContract.PICTURE_FIELD));
+                pwd = values.getAsString(SecretManagerContract.PWD_FIELD);
+                boolean loadOnInit = values.getAsBoolean(SecretManagerContract.LOAD_FIELD);
+                rootTable = values.getAsString(SecretManagerContract.ROOT_ID_FIELD);
+
+                try {
+
+                    if (loadOnInit) {
+                        loadSecrets();
+                    } else {
+                        initSecrets();
+                    }
+                    return 1;
+
+                } catch (Exception ex) {
+                    Log.e(SecretManager.class.getName(), ex.getMessage(), ex);
                 }
 
-                return 1;
-            } catch (Exception ex) {
-                Log.e(SecretManager.class.getName(), ex.getMessage(), ex);
+            } else if (cmd.equals(SecretManagerContract.FLUSH_CMD) && cacheStatus == CACHE_TOFLUSH) {
+
+                /*
+                Content provider flush
+                 */
+
+                try {
+
+                    writeSecrets();
+                    return 1;
+
+                } catch (Exception ex) {
+                    Log.e(SecretManager.class.getName(), ex.getMessage(), ex);
+                }
+
             }
 
         }
@@ -238,6 +285,17 @@ public class SecretManager extends ContentProvider {
     public int delete(@NonNull Uri uri,
                       String selection,
                       String[] selectionArgs) {
+
+        if (!uri.getAuthority().equals(SecretManagerContract.AUTHORITY)) {
+            return 0;
+        }
+
+        String gSecUUID = uri.getPath().substring(1);
+        if (secretTable.containsKey(gSecUUID)) {
+            secretTable.remove(gSecUUID);
+            cacheStatus = CACHE_TOFLUSH;
+            return 1;
+        }
         return 0;
     }
 

@@ -135,6 +135,7 @@ public class CasketLogin extends AppCompatActivity {
         String rootUUID = UUID.randomUUID().toString();
 
         ContentValues values = new ContentValues();
+        values.put(SecretManagerContract.CMD_FIELD, SecretManagerContract.INIT_CMD);
         values.put(SecretManagerContract.PICTURE_FIELD, picURI.toString());
         values.put(SecretManagerContract.PWD_FIELD, pwd);
         values.put(SecretManagerContract.LOAD_FIELD, loadMode);

@@ -6,6 +6,8 @@ public final class SecretManagerContract {
 
     public static final String ROOT_PATH = "/root";
 
+    public static final String CMD_FIELD = "command";
+
     public static final String PICTURE_FIELD = "picture";
 
     public static final String PWD_FIELD = "password";
@@ -23,5 +25,9 @@ public final class SecretManagerContract {
     public static final String SEC_VALUE_FIELD = "value";
 
     public static final String SEC_TYPE_FIELD = "type";
+
+    public static final String INIT_CMD = "init";
+
+    public static final String FLUSH_CMD = "flush";
 
 }
