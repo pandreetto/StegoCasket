@@ -32,6 +32,8 @@ public class SecretList extends AppCompatActivity {
 
     private SecretListAdapter secAdapter;
 
+    private String rootUUID;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,33 +41,10 @@ public class SecretList extends AppCompatActivity {
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         assert fab != null;
-        fab.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View view) {
-                LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                AlertDialog.Builder builder = new AlertDialog.Builder(SecretList.this);
-                final View dialogView = inflater.inflate(R.layout.dialog_newsec, null);
-
-                builder.setView(dialogView);
-                builder.setPositiveButton(R.string.ok_btn, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        EditText secText = (EditText) dialogView.findViewById(R.id.newsec_value);
-                        SecretList.this.createNewSecret(secText.getText().toString());
-                    }
-                }).setNegativeButton(R.string.cancel_btn, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        // Nothing to do
-                    }
-                }).show();
-
-            }
-        });
+        fab.setOnClickListener(new EditorOnClickListener());
 
         Intent intent = this.getIntent();
-        String rootUUID = intent.getStringExtra(CasketConstants.ROOT_UUID);
+        rootUUID = intent.getStringExtra(CasketConstants.ROOT_UUID);
 
         RecyclerView.LayoutManager secLayoutManager = new LinearLayoutManager(this);
 
@@ -76,50 +55,7 @@ public class SecretList extends AppCompatActivity {
         secRecyclerView.setLayoutManager(secLayoutManager);
         secRecyclerView.setAdapter(secAdapter);
 
-        ItemTouchHelper.SimpleCallback sCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.RIGHT | ItemTouchHelper.LEFT) {
-
-            @Override
-            public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder,
-                                  RecyclerView.ViewHolder target) {
-                Log.d(TAG, "Called move in sCallback");
-                return false;
-            }
-
-            @Override
-            public void onSwiped(final RecyclerView.ViewHolder viewHolder, int swipeDir) {
-                final int position = viewHolder.getAdapterPosition();
-                AlertDialog.Builder builder = new AlertDialog.Builder(SecretList.this);
-                builder.setMessage(R.string.ok_delete_sec);
-
-                builder.setPositiveButton(R.string.remove_btn, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-
-                        String cntPrefix = "content://" + SecretManagerContract.AUTHORITY;
-
-                        TextView tView = (TextView) viewHolder.itemView.findViewById(R.id.secret_name);
-                        String sgUUID = tView.getTag().toString();
-                        Uri secItem = Uri.parse(cntPrefix + "/" + sgUUID);
-                        int num = SecretList.this.getContentResolver().delete(secItem, null, null);
-
-                        if (num > 0) {
-
-                            SecretList.this.sendFlushCommand();
-
-                            secAdapter.reset();
-                            secAdapter.notifyItemRemoved(position);
-                        }
-                    }
-
-                }).setNegativeButton(R.string.cancel_btn, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        secAdapter.notifyItemRemoved(position + 1);
-                        secAdapter.notifyItemRangeChanged(position, secAdapter.getItemCount());
-                    }
-                }).show();
-            }
-        };
+        ItemTouchHelper.SimpleCallback sCallback = new ListTouchCallback();
 
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(sCallback);
         itemTouchHelper.attachToRecyclerView(secRecyclerView);
@@ -132,26 +68,6 @@ public class SecretList extends AppCompatActivity {
         Intent intent = new Intent(this, SecretCard.class);
         intent.putExtra(CasketConstants.SEC_UUID, sUUID);
         startActivity(intent);
-    }
-
-    public void createNewSecret(String secId) {
-
-        String sgUUID = UUID.randomUUID().toString();
-
-        ContentValues values = new ContentValues();
-        values.put(SecretManagerContract.SEC_NAME_FIELD, secId);
-        Uri secTable = Uri.parse("content://" + SecretManagerContract.AUTHORITY + "/" + sgUUID);
-        Uri result = this.getContentResolver().insert(secTable, values);
-
-        if (result != null) {
-
-            secAdapter.reset();
-            secAdapter.notifyDataSetChanged();
-
-            Intent intent = new Intent(this, SecretCard.class);
-            intent.putExtra(CasketConstants.SEC_UUID, sgUUID);
-            startActivity(intent);
-        }
     }
 
     private void sendFlushCommand() {
@@ -167,6 +83,102 @@ public class SecretList extends AppCompatActivity {
              */
         }
 
+    }
+
+    private class EditorOnClickListener implements View.OnClickListener {
+
+        @Override
+        public void onClick(View view) {
+            LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            AlertDialog.Builder builder = new AlertDialog.Builder(SecretList.this);
+            final View dialogView = inflater.inflate(R.layout.dialog_newsec, null);
+
+            builder.setView(dialogView);
+            builder.setPositiveButton(R.string.ok_btn, new DialogInterface.OnClickListener() {
+
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    EditText secText = (EditText) dialogView.findViewById(R.id.newsec_value);
+
+                    String sgUUID = UUID.randomUUID().toString();
+                    String rootURI = "content://" + SecretManagerContract.AUTHORITY + "/" + rootUUID;
+
+                    ContentValues values = new ContentValues();
+                    values.put(SecretManagerContract.SEC_ID_FIELD, sgUUID);
+                    values.put(SecretManagerContract.SEC_NAME_FIELD, secText.getText().toString());
+
+                    Uri result = SecretList.this.getContentResolver().insert(Uri.parse(rootURI), values);
+
+                    if (result != null) {
+
+                        secAdapter.reset();
+                        secAdapter.notifyDataSetChanged();
+
+                        Intent intent = new Intent(SecretList.this, SecretCard.class);
+                        intent.putExtra(CasketConstants.SEC_UUID, sgUUID);
+                        startActivity(intent);
+                    }
+                }
+
+            }).setNegativeButton(R.string.cancel_btn, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    // Nothing to do
+                }
+            }).show();
+        }
+    }
+
+    private class ListTouchCallback extends ItemTouchHelper.SimpleCallback {
+
+        public ListTouchCallback() {
+
+            super(0, ItemTouchHelper.RIGHT | ItemTouchHelper.LEFT);
+
+        }
+
+        @Override
+        public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder,
+                              RecyclerView.ViewHolder target) {
+            return false;
+        }
+
+        @Override
+        public void onSwiped(final RecyclerView.ViewHolder viewHolder, int swipeDir) {
+            final int position = viewHolder.getAdapterPosition();
+            AlertDialog.Builder builder = new AlertDialog.Builder(SecretList.this);
+            builder.setMessage(R.string.ok_delete_sec);
+
+            builder.setPositiveButton(R.string.remove_btn, new DialogInterface.OnClickListener() {
+
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+
+                    TextView tView = (TextView) viewHolder.itemView.findViewById(R.id.secret_name);
+                    String sgUUID = tView.getTag().toString();
+
+                    String rootURI = "content://" + SecretManagerContract.AUTHORITY + "/" + rootUUID;
+
+                    int num = SecretList.this.getContentResolver().delete(Uri.parse(rootURI),
+                            SecretManagerContract.SEC_ID_FIELD, new String[]{sgUUID});
+
+                    if (num > 0) {
+
+                        SecretList.this.sendFlushCommand();
+
+                        secAdapter.reset();
+                        secAdapter.notifyItemRemoved(position);
+                    }
+                }
+
+            }).setNegativeButton(R.string.cancel_btn, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    secAdapter.notifyItemRemoved(position + 1);
+                    secAdapter.notifyItemRangeChanged(position, secAdapter.getItemCount());
+                }
+            }).show();
+        }
     }
 
 }

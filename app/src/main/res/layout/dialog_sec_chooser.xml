@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RadioGroup xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <RadioButton
+        android:id="@+id/textRadioBtn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/text_radio_btn" />
+
+    <RadioButton
+        android:id="@+id/mailRadioBtn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/mail_radio_btn" />
+
+    <RadioButton
+        android:id="@+id/callRadioBtn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/call_radio_btn" />
+
+    <RadioButton
+        android:id="@+id/linkRadioBtn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/link_radio_btn" />
+</RadioGroup>

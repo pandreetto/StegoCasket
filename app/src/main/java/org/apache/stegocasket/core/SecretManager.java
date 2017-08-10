@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.TreeMap;
 import java.util.UUID;
 
 import javax.crypto.Cipher;
@@ -186,7 +185,7 @@ public class SecretManager extends ContentProvider {
                 cursor.addRow(new Object[]{
                         rSecret.getId(),
                         rSecret.getValue(),
-                        "" // TODO missing type
+                        rSecret.getClass().getName()
                 });
             }
             return cursor;
@@ -202,21 +201,53 @@ public class SecretManager extends ContentProvider {
             return null;
         }
 
+        if (uri.getPath().equals("/" + rootTable)) {
+            /*
+            Register a new GroupOfSecret
+             */
+            String gSecUUID = values.getAsString(SecretManagerContract.SEC_ID_FIELD);
+            String gSecName = values.getAsString(SecretManagerContract.SEC_NAME_FIELD);
+
+            if (secretTable.containsKey(gSecUUID)) {
+                Log.e(TAG, "UUID already exists");
+                return null;
+            }
+
+            GroupOfSecret gSecrets = new GroupOfSecret();
+            gSecrets.setId(gSecName);
+            secretTable.put(gSecUUID, gSecrets);
+            cacheStatus = CACHE_TOFLUSH;
+
+            return uri;
+        }
+
         String gSecUUID = uri.getPath().substring(1);
-        if (secretTable.containsKey(gSecUUID)) {
-            Log.e(TAG, "UUID already exists");
+        if (!secretTable.containsKey(gSecUUID)) {
             return null;
         }
 
-        String secId = values.getAsString(SecretManagerContract.SEC_NAME_FIELD);
+        /*
+        Register a property in a group of secret
+         */
+        String secKey = values.getAsString(SecretManagerContract.SEC_KEY_FIELD);
+        String secValue = values.getAsString(SecretManagerContract.SEC_VALUE_FIELD);
+        String secClass = values.getAsString(SecretManagerContract.SEC_TYPE_FIELD);
 
-        Log.d(TAG, "Inserted " + gSecUUID + ": " + secId);
-        GroupOfSecret gSecrets = new GroupOfSecret();
-        gSecrets.setId(secId);
-        secretTable.put(gSecUUID, gSecrets);
-        cacheStatus = CACHE_TOFLUSH;
+        try {
+            RenderableSecret secItem = (RenderableSecret) Class.forName(secClass).newInstance();
+            secItem.setId(secKey);
+            secItem.setValue(secValue);
 
-        return uri;
+            GroupOfSecret currGroup = (GroupOfSecret) secretTable.get(gSecUUID);
+            currGroup.add(secItem);
+
+            return uri;
+
+        } catch (Exception ex) {
+            Log.e(TAG, ex.getMessage(), ex);
+        }
+
+        return null;
     }
 
     @Override
@@ -290,12 +321,43 @@ public class SecretManager extends ContentProvider {
             return 0;
         }
 
-        String gSecUUID = uri.getPath().substring(1);
-        if (secretTable.containsKey(gSecUUID)) {
-            secretTable.remove(gSecUUID);
+        if (uri.getPath().equals("/" + rootTable) && selection != null &&
+                selection.equals(SecretManagerContract.SEC_ID_FIELD)) {
+            /*
+            Delete a group of secrets
+             */
+            int count = 0;
+
+            for (String gsUUID : selectionArgs) {
+                if (secretTable.containsKey(gsUUID)) {
+                    secretTable.remove(gsUUID);
+                    count++;
+                }
+            }
+
             cacheStatus = CACHE_TOFLUSH;
-            return 1;
+            return count;
         }
+
+        String gSecUUID = uri.getPath().substring(1);
+        if (!secretTable.containsKey(gSecUUID)) {
+            return 0;
+        }
+
+        if (selection != null && selection.equals(SecretManagerContract.SEC_KEY_FIELD)) {
+                /*
+                Delete single properties
+                 */
+            for (String secName : selectionArgs) {
+                GroupOfSecret gSecret = (GroupOfSecret) secretTable.get(gSecUUID);
+                gSecret.remove(secName);
+                Log.d(TAG, "Deleted property " + secName);
+            }
+            cacheStatus = CACHE_TOFLUSH;
+            return selectionArgs.length;
+
+        }
+
         return 0;
     }
 
@@ -304,4 +366,7 @@ public class SecretManager extends ContentProvider {
         return null;
     }
 
+    /*
+    TODO imvestigate https://stackoverflow.com/questions/3873214/best-ways-to-deliver-control-messages-to-custom-content-provider
+     */
 }

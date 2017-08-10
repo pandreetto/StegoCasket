@@ -6,15 +6,19 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import org.apache.stegocasket.core.Secret;
 import org.apache.stegocasket.core.SecretManagerContract;
 
 class SecretCardAdapter extends RecyclerView.Adapter<SecretCardAdapter.ViewHolder> {
 
     private static final String TAG = SecretCardAdapter.class.getName();
+
+    private SecretCard context;
 
     static class ViewHolder extends RecyclerView.ViewHolder {
 
@@ -28,9 +32,10 @@ class SecretCardAdapter extends RecyclerView.Adapter<SecretCardAdapter.ViewHolde
 
     private Cursor cardCursor;
 
-    SecretCardAdapter(Context ctx, String sUUID) {
+    SecretCardAdapter(SecretCard ctx, String sUUID) {
+        context = ctx;
         Uri secretTable = Uri.parse("content://" + SecretManagerContract.AUTHORITY + "/" + sUUID);
-        cardCursor = ctx.getContentResolver().query(secretTable, new String[]{}, "", new String[]{}, "");
+        cardCursor = context.getContentResolver().query(secretTable, new String[]{}, "", new String[]{}, "");
     }
 
     @Override
@@ -48,10 +53,22 @@ class SecretCardAdapter extends RecyclerView.Adapter<SecretCardAdapter.ViewHolde
         kView.setText(cardCursor.getString(cardCursor.getColumnIndex(SecretManagerContract.SEC_KEY_FIELD)));
         TextView vView = (TextView) holder.secLayout.findViewById(R.id.prop_value);
         vView.setText(cardCursor.getString(cardCursor.getColumnIndex(SecretManagerContract.SEC_VALUE_FIELD)));
+        vView.setLongClickable(true);
+        vView.setOnLongClickListener(new EditOnLongClickListener());
     }
 
     @Override
     public int getItemCount() {
         return cardCursor.getCount();
     }
+
+    private class EditOnLongClickListener implements View.OnLongClickListener {
+
+        @Override
+        public boolean onLongClick(View view) {
+            context.modifySecret(view);
+            return true;
+        }
+    }
+
 }

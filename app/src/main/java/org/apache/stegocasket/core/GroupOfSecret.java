@@ -41,11 +41,6 @@ public class GroupOfSecret
         super.remove(tmpsec);
     }
 
-    @Deprecated
-    public Iterator<Secret> iterator() {
-        return super.iterator();
-    }
-
     public void processStartElement(String qName, Attributes attributes) {
         if (qName.equals("group")) {
             id = attributes.getValue("id");

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/mainBG">
+
+    <TextView
+        android:id="@+id/new_name_title"
+        android:textColor="@color/colorPrimary"
+        android:text="@string/enter_mail_name"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="5dp"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:paddingTop="5dp" />
+
+    <EditText
+        android:id="@+id/new_name_cnt"
+        android:inputType="text|textNoSuggestions"
+        android:hint=""
+        android:textColor="@color/colorPrimary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:tag="org.apache.stegocasket.core.MailSecret"/>
+
+    <TextView
+        android:id="@+id/new_value_title"
+        android:textColor="@color/colorPrimary"
+        android:text="@string/enter_mail_value"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="5dp"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:paddingTop="5dp" />
+
+    <EditText
+        android:id="@+id/new_value_cnt"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint=""
+        android:inputType="text|textNoSuggestions|textEmailAddress"
+        android:textColor="@color/colorPrimary" />
+
+</LinearLayout>

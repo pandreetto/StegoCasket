@@ -20,4 +20,18 @@
     <string name="ok_delete_sec">Delete secret?</string>
     <string name="ok_delete_pro">Delete property?</string>
 
+    <string name="text_radio_btn">Text property</string>
+    <string name="mail_radio_btn">Email property</string>
+    <string name="call_radio_btn">Phone property</string>
+    <string name="link_radio_btn">Web link property</string>
+
+    <string name="enter_prop_name">Property name</string>
+    <string name="enter_prop_value">Property value</string>
+    <string name="enter_mail_name">Email name</string>
+    <string name="enter_mail_value">Email address</string>
+    <string name="enter_call_name">Phone name</string>
+    <string name="enter_call_value">Phone number</string>
+    <string name="enter_link_name">Web link name</string>
+    <string name="enter_link_value">Web link address</string>
+
 </resources>
