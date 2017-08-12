@@ -19,7 +19,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.UUID;
 
 import javax.crypto.Cipher;
@@ -42,7 +42,7 @@ public class SecretManager extends ContentProvider {
 
     private String pwd;
 
-    private LinkedHashMap<String, Secret> secretTable;
+    private HashMap<String, Secret> secretTable;
 
     private int cacheStatus;
 
@@ -51,7 +51,7 @@ public class SecretManager extends ContentProvider {
     }
 
     private void initSecrets() {
-        secretTable = new LinkedHashMap<String, Secret>();
+        secretTable = new HashMap<>();
         cacheStatus = CACHE_STABLE;
     }
 
@@ -74,9 +74,9 @@ public class SecretManager extends ContentProvider {
             parser.parse();
             ArrayList<Secret> secretList = parser.getSecrets();
 
-            secretTable = new LinkedHashMap<String, Secret>(secretList.size());
-            for (Secret tmpsec : secretList) {
-                secretTable.put(UUID.randomUUID().toString(), tmpsec);
+            secretTable = new HashMap<>(secretList.size());
+            for (Secret tmpSec : secretList) {
+                secretTable.put(UUID.randomUUID().toString(), tmpSec);
             }
 
             cacheStatus = CACHE_STABLE;
@@ -180,6 +180,9 @@ public class SecretManager extends ContentProvider {
             };
             MatrixCursor cursor = new MatrixCursor(columns);
             GroupOfSecret gSecrets = (GroupOfSecret) secretTable.get(secUUID);
+            /*
+            TODO implement sort
+             */
             for (Secret tmpsec : gSecrets) {
                 RenderableSecret rSecret = (RenderableSecret) tmpsec;
                 cursor.addRow(new Object[]{
@@ -298,6 +301,7 @@ public class SecretManager extends ContentProvider {
 
                 try {
 
+                    Log.d(TAG, "Called flush");
                     writeSecrets();
                     return 1;
 
@@ -305,6 +309,24 @@ public class SecretManager extends ContentProvider {
                     Log.e(SecretManager.class.getName(), ex.getMessage(), ex);
                 }
 
+            }
+
+        }
+
+        String gSecUUID = uri.getPath().substring(1);
+        if (secretTable.containsKey(gSecUUID) && selection.equals(SecretManagerContract.SEC_KEY_FIELD)) {
+            /*
+            Change a property in a group of secret
+             */
+            String secValue = values.getAsString(SecretManagerContract.SEC_VALUE_FIELD);
+            String secKey = selectionArgs[0];
+
+            GroupOfSecret gSecret = (GroupOfSecret) secretTable.get(gSecUUID);
+            RenderableSecret rSecret = (RenderableSecret) gSecret.get(secKey);
+            if (rSecret != null) {
+                rSecret.setValue(secValue);
+                cacheStatus = CACHE_TOFLUSH;
+                return 1;
             }
 
         }

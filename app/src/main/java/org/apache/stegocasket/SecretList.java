@@ -1,8 +1,6 @@
 package org.apache.stegocasket;
 
 import android.app.AlertDialog;
-import android.app.Dialog;
-import android.app.DialogFragment;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -14,7 +12,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
@@ -48,7 +45,7 @@ public class SecretList extends AppCompatActivity {
 
         RecyclerView.LayoutManager secLayoutManager = new LinearLayoutManager(this);
 
-        secAdapter = new SecretListAdapter(this, rootUUID);
+        secAdapter = new SecretListAdapter(this);
 
         secRecyclerView = (RecyclerView) findViewById(R.id.secrets_recycler);
         assert secRecyclerView != null;
@@ -60,6 +57,10 @@ public class SecretList extends AppCompatActivity {
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(sCallback);
         itemTouchHelper.attachToRecyclerView(secRecyclerView);
 
+    }
+
+    public String getRootUUID() {
+        return rootUUID;
     }
 
     public void openSecret(View sView) {

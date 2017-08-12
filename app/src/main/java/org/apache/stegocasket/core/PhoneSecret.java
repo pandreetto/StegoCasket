@@ -1,6 +1,5 @@
 package org.apache.stegocasket.core;
 
-public class PhoneSecret
-        extends PropertySecret {
+public class PhoneSecret extends PropertySecret {
 
 }

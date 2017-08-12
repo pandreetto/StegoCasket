@@ -12,6 +12,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
+import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,14 +20,13 @@ import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.TextView;
 
-import org.apache.stegocasket.core.RenderableSecret;
 import org.apache.stegocasket.core.SecretManagerContract;
 
 public class SecretCard extends AppCompatActivity {
 
     private static final String TAG = "SecretCard";
 
-    private RecyclerView.Adapter secAdapter;
+    private SecretCardAdapter secAdapter;
 
     private String secretUUID;
 
@@ -44,7 +44,7 @@ public class SecretCard extends AppCompatActivity {
 
         RecyclerView.LayoutManager secLayoutManager = new LinearLayoutManager(this);
 
-        secAdapter = new SecretCardAdapter(this, secretUUID);
+        secAdapter = new SecretCardAdapter(this);
 
         RecyclerView secRecyclerView = (RecyclerView) findViewById(R.id.items_recycler);
         assert secRecyclerView != null;
@@ -63,10 +63,50 @@ public class SecretCard extends AppCompatActivity {
         sendFlushCommand();
     }
 
-    public void modifySecret(View sView) {
+    public String getSecretUUID() {
+        return secretUUID;
+    }
+
+    public void useSecret(String key, String value, String className) {
+
+    }
+
+    public void changeSecret(String key, String value, String className) {
+
+        int rDefId = 0;
+        if (className.equals("org.apache.stegocasket.core.PropertySecret")) {
+            rDefId = R.layout.dialog_newprop;
+        } else if (className.equals("org.apache.stegocasket.core.PhoneSecret")) {
+            rDefId = R.layout.dialog_newcall;
+        } else if (className.equals("org.apache.stegocasket.core.MailSecret")) {
+            rDefId = R.layout.dialog_newmail;
+        } else if (className.equals("org.apache.stegocasket.core.LinkSecret")) {
+            rDefId = R.layout.dialog_newlink;
+        }
+
+        LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        AlertDialog.Builder builder = new AlertDialog.Builder(SecretCard.this);
+        final View dialogView = inflater.inflate(rDefId, null);
+        builder.setView(dialogView);
+
+        EditText pNameView = (EditText) dialogView.findViewById(R.id.new_name_cnt);
+        pNameView.setText(key);
+        pNameView.setInputType(InputType.TYPE_NULL);
+
+        EditText pValueView = (EditText) dialogView.findViewById(R.id.new_value_cnt);
+        pValueView.setText(value);
         /*
-        TODO implement modify
+        TODO set focus on pValueView
          */
+
+        builder.setPositiveButton(R.string.ok_btn, new EditorOnClickListener(dialogView, false));
+        builder.setNegativeButton(R.string.cancel_btn, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // Nothing to do
+            }
+        }).show();
+
     }
 
     private void sendFlushCommand() {
@@ -74,11 +114,6 @@ public class SecretCard extends AppCompatActivity {
         Uri rootTableURI = Uri.parse(cntPrefix + SecretManagerContract.ROOT_PATH);
         ContentValues values = new ContentValues();
         values.put(SecretManagerContract.CMD_FIELD, SecretManagerContract.FLUSH_CMD);
-
-        if (!TAG.equals("")) {
-            // temporary disable flush
-            return;
-        }
 
         int result = this.getContentResolver().update(rootTableURI, values, "", new String[0]);
         if (result == 0) {
@@ -116,13 +151,13 @@ public class SecretCard extends AppCompatActivity {
                     TextView tView = (TextView) viewHolder.itemView.findViewById(R.id.prop_key);
                     String secName = tView.getText().toString();
 
-                    String secURI = "content://" + SecretManagerContract.AUTHORITY+ "/" + secretUUID;
+                    String secURI = "content://" + SecretManagerContract.AUTHORITY + "/" + secretUUID;
 
                     int num = SecretCard.this.getContentResolver().delete(Uri.parse(secURI),
                             SecretManagerContract.SEC_KEY_FIELD, new String[]{secName});
 
                     if (num > 0) {
-                        Log.d(TAG, "Deleted item " + secName);
+                        secAdapter.reset();
                         secAdapter.notifyItemRemoved(position);
                     }
 
@@ -178,7 +213,7 @@ public class SecretCard extends AppCompatActivity {
                     final View dialogView = inflater.inflate(rDefId, null);
 
                     eBuilder.setView(dialogView);
-                    eBuilder.setPositiveButton(R.string.ok_btn, new EditorOnClickListener(dialogView));
+                    eBuilder.setPositiveButton(R.string.ok_btn, new EditorOnClickListener(dialogView, true));
                     eBuilder.setNegativeButton(R.string.cancel_btn, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
@@ -200,8 +235,12 @@ public class SecretCard extends AppCompatActivity {
 
         private View dialogView;
 
-        public EditorOnClickListener(View dView) {
+        private boolean insertMode;
+
+        public EditorOnClickListener(View dView, boolean inMode) {
+
             dialogView = dView;
+            insertMode = inMode;
         }
 
         @Override
@@ -215,10 +254,26 @@ public class SecretCard extends AppCompatActivity {
             values.put(SecretManagerContract.SEC_VALUE_FIELD, pValueView.getText().toString());
             values.put(SecretManagerContract.SEC_TYPE_FIELD, pNameView.getTag().toString());
 
-            Uri result = SecretCard.this.getContentResolver().insert(Uri.parse(secURI), values);
-            if (result!=null) {
+            if (insertMode) {
 
-                secAdapter.notifyDataSetChanged();
+                Uri result = SecretCard.this.getContentResolver().insert(Uri.parse(secURI), values);
+                if (result != null) {
+
+                    secAdapter.reset();
+                    secAdapter.notifyDataSetChanged();
+
+                }
+
+            } else {
+
+                int result = SecretCard.this.getContentResolver().update(Uri.parse(secURI), values,
+                        SecretManagerContract.SEC_KEY_FIELD, new String[]{pNameView.getText().toString()});
+                if (result > 0) {
+
+                    secAdapter.reset();
+                    secAdapter.notifyDataSetChanged();
+
+                }
 
             }
 

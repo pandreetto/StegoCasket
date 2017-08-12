@@ -1,6 +1,5 @@
 package org.apache.stegocasket;
 
-import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
@@ -27,15 +26,12 @@ class SecretListAdapter extends RecyclerView.Adapter<SecretListAdapter.ViewHolde
 
     private Cursor intCursor;
 
-    private Context context;
+    private SecretList secretList;
 
-    private String rUUID;
-
-    SecretListAdapter(Context ctx, String rUUID) {
+    SecretListAdapter(SecretList ctx) {
 
         intCursor = null;
-        context = ctx;
-        this.rUUID = rUUID;
+        secretList = ctx;
 
     }
 
@@ -67,7 +63,7 @@ class SecretListAdapter extends RecyclerView.Adapter<SecretListAdapter.ViewHolde
         return intCursor.getCount();
     }
 
-    public void reset() {
+    public synchronized void reset() {
 
         /*
         TODO find a better way
@@ -75,11 +71,11 @@ class SecretListAdapter extends RecyclerView.Adapter<SecretListAdapter.ViewHolde
         intCursor = null;
     }
 
-    private void loadCursor() {
+    private synchronized void loadCursor() {
 
         if (intCursor == null) {
-            Uri mainTable = Uri.parse("content://" + SecretManagerContract.AUTHORITY + "/" + rUUID);
-            intCursor = context.getContentResolver().query(mainTable, new String[]{}, "", new String[]{}, "");
+            Uri mainTable = Uri.parse("content://" + SecretManagerContract.AUTHORITY + "/" + secretList.getRootUUID());
+            intCursor = secretList.getContentResolver().query(mainTable, new String[]{}, "", new String[]{}, "");
         }
 
     }

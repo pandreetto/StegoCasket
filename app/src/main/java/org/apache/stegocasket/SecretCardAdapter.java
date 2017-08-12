@@ -1,7 +1,6 @@
 package org.apache.stegocasket;
 
 
-import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
@@ -11,14 +10,11 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import org.apache.stegocasket.core.Secret;
 import org.apache.stegocasket.core.SecretManagerContract;
 
 class SecretCardAdapter extends RecyclerView.Adapter<SecretCardAdapter.ViewHolder> {
 
     private static final String TAG = SecretCardAdapter.class.getName();
-
-    private SecretCard context;
 
     static class ViewHolder extends RecyclerView.ViewHolder {
 
@@ -30,12 +26,13 @@ class SecretCardAdapter extends RecyclerView.Adapter<SecretCardAdapter.ViewHolde
         }
     }
 
+    private SecretCard secretCard;
+
     private Cursor cardCursor;
 
-    SecretCardAdapter(SecretCard ctx, String sUUID) {
-        context = ctx;
-        Uri secretTable = Uri.parse("content://" + SecretManagerContract.AUTHORITY + "/" + sUUID);
-        cardCursor = context.getContentResolver().query(secretTable, new String[]{}, "", new String[]{}, "");
+    SecretCardAdapter(SecretCard ctx) {
+        secretCard = ctx;
+        cardCursor = null;
     }
 
     @Override
@@ -48,27 +45,74 @@ class SecretCardAdapter extends RecyclerView.Adapter<SecretCardAdapter.ViewHolde
 
     @Override
     public void onBindViewHolder(SecretCardAdapter.ViewHolder holder, int position) {
+
+        loadCursor();
         cardCursor.moveToPosition(position);
+
+        String secKey = cardCursor.getString(cardCursor.getColumnIndex(SecretManagerContract.SEC_KEY_FIELD));
+        String secVal = cardCursor.getString(cardCursor.getColumnIndex(SecretManagerContract.SEC_VALUE_FIELD));
+        String secCls = cardCursor.getString(cardCursor.getColumnIndex(SecretManagerContract.SEC_TYPE_FIELD));
+
         TextView kView = (TextView) holder.secLayout.findViewById(R.id.prop_key);
-        kView.setText(cardCursor.getString(cardCursor.getColumnIndex(SecretManagerContract.SEC_KEY_FIELD)));
+        kView.setText(secKey);
         TextView vView = (TextView) holder.secLayout.findViewById(R.id.prop_value);
-        vView.setText(cardCursor.getString(cardCursor.getColumnIndex(SecretManagerContract.SEC_VALUE_FIELD)));
+        vView.setText(secVal);
+
+        WrapperClickListener wListener = new WrapperClickListener(secKey, secVal, secCls);
         vView.setLongClickable(true);
-        vView.setOnLongClickListener(new EditOnLongClickListener());
+        vView.setOnClickListener(wListener);
+        vView.setOnLongClickListener(wListener);
+
     }
 
     @Override
     public int getItemCount() {
+
+        loadCursor();
         return cardCursor.getCount();
+
     }
 
-    private class EditOnLongClickListener implements View.OnLongClickListener {
+    private class WrapperClickListener implements View.OnLongClickListener, View.OnClickListener {
+
+        private String secKey;
+        private String secValue;
+        private String secClass;
+
+        WrapperClickListener(String kName, String vName, String cName) {
+            secKey = kName;
+            secValue = vName;
+            secClass = cName;
+        }
+
+        @Override
+        public void onClick(View view) {
+            secretCard.useSecret(secKey, secValue, secClass);
+        }
 
         @Override
         public boolean onLongClick(View view) {
-            context.modifySecret(view);
+            secretCard.changeSecret(secKey, secValue, secClass);
             return true;
         }
     }
 
+    public synchronized void reset() {
+
+        /*
+        TODO improve
+         */
+        cardCursor = null;
+
+    }
+
+    private synchronized void loadCursor() {
+
+        if(cardCursor==null) {
+            Uri secretTable = Uri.parse("content://" + SecretManagerContract.AUTHORITY + "/"
+                    + secretCard.getSecretUUID());
+            cardCursor = secretCard.getContentResolver().query(secretTable, new String[]{}, "",
+                    new String[]{}, "");
+        }
+    }
 }

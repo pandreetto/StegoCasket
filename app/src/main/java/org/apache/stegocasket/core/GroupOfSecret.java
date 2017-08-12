@@ -1,9 +1,8 @@
 package org.apache.stegocasket.core;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-
 import org.xml.sax.Attributes;
+
+import java.util.ArrayList;
 
 public class GroupOfSecret
         extends ArrayList<Secret>
@@ -39,6 +38,14 @@ public class GroupOfSecret
         }
 
         super.remove(tmpsec);
+    }
+
+    public Secret get(String secId) {
+        for (Secret sec : this) {
+            if (sec.getId().equals(secId))
+                return sec;
+        }
+        return null;
     }
 
     public void processStartElement(String qName, Attributes attributes) {
