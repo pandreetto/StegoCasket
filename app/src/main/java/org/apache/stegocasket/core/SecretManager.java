@@ -1,11 +1,16 @@
 package org.apache.stegocasket.core;
 
+import android.content.BroadcastReceiver;
 import android.content.ContentProvider;
 import android.content.ContentValues;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.net.Uri;
 import android.support.annotation.NonNull;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import org.apache.stegocasket.R;
@@ -46,8 +51,12 @@ public class SecretManager extends ContentProvider {
 
     private int cacheStatus;
 
+    private int statusCode;
+
     public SecretManager() {
+
         cacheStatus = CACHE_IDLE;
+        statusCode = SecretManagerContract.STATUS_OK;
     }
 
     private void initSecrets() {
@@ -127,6 +136,8 @@ public class SecretManager extends ContentProvider {
 
             StegoCodec.encode(this.getContext(), pictureURI, boutStream.toByteArray(), this.pwd);
 
+            cacheStatus = CACHE_STABLE;
+
         } catch (IOException ioEx) {
 
             Log.e(TAG, ioEx.getMessage(), ioEx);
@@ -146,6 +157,13 @@ public class SecretManager extends ContentProvider {
         cacheStatus = CACHE_IDLE;
         rootTable = null;
 
+        IntentFilter iFilter = new IntentFilter();
+        iFilter.addAction(SecretManagerContract.INIT_INTENT);
+        iFilter.addAction(SecretManagerContract.FLUSH_INTENT);
+
+        LocalBroadcastManager broadcastManager = LocalBroadcastManager.getInstance(this.getContext());
+        broadcastManager.registerReceiver(new CommandReceiver(), iFilter);
+
         return true;
     }
 
@@ -155,8 +173,17 @@ public class SecretManager extends ContentProvider {
                         String selection,
                         String[] selectionArgs,
                         String sortOrder) {
-        if (!uri.getAuthority().equals(SecretManagerContract.AUTHORITY)) {
-            throw new IllegalArgumentException();
+        if (!uri.getAuthority().equals(SecretManagerContract.AUTHORITY) || cacheStatus == CACHE_IDLE) {
+            return null;
+        }
+
+        if (uri.toString().equals(SecretManagerContract.REGISTER_URI)) {
+            String[] columns = new String[]{
+                    SecretManagerContract.STATUS_FIELD
+            };
+            MatrixCursor cursor = new MatrixCursor(columns);
+            cursor.addRow(new Object[]{Integer.valueOf(statusCode)});
+            return cursor;
         }
 
         if (uri.getPath().equals("/" + rootTable)) {
@@ -200,7 +227,7 @@ public class SecretManager extends ContentProvider {
     @Override
     public Uri insert(@NonNull Uri uri, ContentValues values) {
 
-        if (!uri.getAuthority().equals(SecretManagerContract.AUTHORITY)) {
+        if (!uri.getAuthority().equals(SecretManagerContract.AUTHORITY) || cacheStatus == CACHE_IDLE) {
             return null;
         }
 
@@ -259,58 +286,8 @@ public class SecretManager extends ContentProvider {
                       String selection,
                       String[] selectionArgs) {
 
-        if (!uri.getAuthority().equals(SecretManagerContract.AUTHORITY)) {
+        if (!uri.getAuthority().equals(SecretManagerContract.AUTHORITY) || cacheStatus == CACHE_IDLE) {
             return 0;
-        }
-
-        /*
-        Control commands for the content provider
-         */
-        if (uri.getPath().equals("/root")) {
-
-            String cmd = values.getAsString(SecretManagerContract.CMD_FIELD);
-
-            if (cmd.equals(SecretManagerContract.INIT_CMD)) {
-
-                /*
-                Content provider initialization
-                 */
-                pictureURI = Uri.parse(values.getAsString(SecretManagerContract.PICTURE_FIELD));
-                pwd = values.getAsString(SecretManagerContract.PWD_FIELD);
-                boolean loadOnInit = values.getAsBoolean(SecretManagerContract.LOAD_FIELD);
-                rootTable = values.getAsString(SecretManagerContract.ROOT_ID_FIELD);
-
-                try {
-
-                    if (loadOnInit) {
-                        loadSecrets();
-                    } else {
-                        initSecrets();
-                    }
-                    return 1;
-
-                } catch (Exception ex) {
-                    Log.e(SecretManager.class.getName(), ex.getMessage(), ex);
-                }
-
-            } else if (cmd.equals(SecretManagerContract.FLUSH_CMD) && cacheStatus == CACHE_TOFLUSH) {
-
-                /*
-                Content provider flush
-                 */
-
-                try {
-
-                    Log.d(TAG, "Called flush");
-                    writeSecrets();
-                    return 1;
-
-                } catch (Exception ex) {
-                    Log.e(SecretManager.class.getName(), ex.getMessage(), ex);
-                }
-
-            }
-
         }
 
         String gSecUUID = uri.getPath().substring(1);
@@ -339,7 +316,7 @@ public class SecretManager extends ContentProvider {
                       String selection,
                       String[] selectionArgs) {
 
-        if (!uri.getAuthority().equals(SecretManagerContract.AUTHORITY)) {
+        if (!uri.getAuthority().equals(SecretManagerContract.AUTHORITY) || cacheStatus == CACHE_IDLE) {
             return 0;
         }
 
@@ -385,10 +362,56 @@ public class SecretManager extends ContentProvider {
 
     @Override
     public String getType(@NonNull Uri uri) {
+
+        /*
+        TODO implement
+         */
         return null;
     }
 
-    /*
-    TODO imvestigate https://stackoverflow.com/questions/3873214/best-ways-to-deliver-control-messages-to-custom-content-provider
-     */
+    private class CommandReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            if (intent.getAction().equals(SecretManagerContract.INIT_INTENT)) {
+
+                pictureURI = Uri.parse(intent.getStringExtra(SecretManagerContract.PICTURE_FIELD));
+                pwd = intent.getStringExtra(SecretManagerContract.PWD_FIELD);
+                rootTable = intent.getStringExtra(SecretManagerContract.ROOT_ID_FIELD);
+
+                boolean loadOnInit = intent.getBooleanExtra(SecretManagerContract.LOAD_FIELD, true);
+
+                if (loadOnInit) {
+
+                    try {
+
+                        loadSecrets();
+
+                    } catch (Exception ex) {
+                        Log.e(SecretManager.class.getName(), ex.getMessage(), ex);
+                        cacheStatus = CACHE_IDLE;
+                        statusCode = SecretManagerContract.STATUS_ERR;
+                    }
+
+                } else {
+                    initSecrets();
+                }
+
+
+            } else if (intent.getAction().equals(SecretManagerContract.FLUSH_INTENT)) {
+
+                try {
+
+                    writeSecrets();
+
+                } catch (Exception ex) {
+                    Log.e(SecretManager.class.getName(), ex.getMessage(), ex);
+                    statusCode = SecretManagerContract.STATUS_ERR;
+                }
+
+            }
+        }
+
+    }
 }

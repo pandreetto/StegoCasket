@@ -4,9 +4,9 @@ public final class SecretManagerContract {
 
     public static final String AUTHORITY = "org.apache.stegocasket.provider";
 
-    public static final String ROOT_PATH = "/root";
+    public static final String REGISTER_URI = "content://" + AUTHORITY + "/status";
 
-    public static final String CMD_FIELD = "command";
+    public static final String STATUS_FIELD = "status";
 
     public static final String PICTURE_FIELD = "picture";
 
@@ -26,8 +26,19 @@ public final class SecretManagerContract {
 
     public static final String SEC_TYPE_FIELD = "type";
 
-    public static final String INIT_CMD = "init";
+    /*
+    Control commands
+     */
+    public static final String INIT_INTENT = "org.apache.stegocasket.init";
 
-    public static final String FLUSH_CMD = "flush";
+    public static final String FLUSH_INTENT = "org.apache.stegocasket.flush";
+
+    /*
+    Status codes
+     */
+
+    public static final int STATUS_OK = 0;
+
+    public static final int STATUS_ERR = 1;
 
 }

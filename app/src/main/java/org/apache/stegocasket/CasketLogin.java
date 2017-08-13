@@ -2,13 +2,14 @@ package org.apache.stegocasket;
 
 import android.Manifest;
 import android.app.Activity;
-import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -132,27 +133,37 @@ public class CasketLogin extends AppCompatActivity {
 
     public void run(Uri picURI, String pwd, boolean loadMode) {
 
+        /*
+        Initialize or reset the content provider
+         */
         String rootUUID = UUID.randomUUID().toString();
 
-        ContentValues values = new ContentValues();
-        values.put(SecretManagerContract.CMD_FIELD, SecretManagerContract.INIT_CMD);
-        values.put(SecretManagerContract.PICTURE_FIELD, picURI.toString());
-        values.put(SecretManagerContract.PWD_FIELD, pwd);
-        values.put(SecretManagerContract.LOAD_FIELD, loadMode);
-        values.put(SecretManagerContract.ROOT_ID_FIELD, rootUUID);
+        Intent provInit = new Intent(SecretManagerContract.INIT_INTENT);
+        provInit.putExtra(SecretManagerContract.PICTURE_FIELD, picURI.toString());
+        provInit.putExtra(SecretManagerContract.PWD_FIELD, pwd);
+        provInit.putExtra(SecretManagerContract.LOAD_FIELD, loadMode);
+        provInit.putExtra(SecretManagerContract.ROOT_ID_FIELD, rootUUID);
 
-        String rootTableURI = "content://" + SecretManagerContract.AUTHORITY + SecretManagerContract.ROOT_PATH;
+        LocalBroadcastManager broadcastManager = LocalBroadcastManager.getInstance(this);
+        broadcastManager.sendBroadcastSync(provInit);
 
-        int result = this.getContentResolver().update(Uri.parse(rootTableURI), values, "", new String[0]);
-        if (result == 0) {
+        /*
+        Check the status of the content provider
+         */
+        Uri registerURI = Uri.parse(SecretManagerContract.REGISTER_URI);
+        Cursor cursor = this.getContentResolver().query(registerURI, new String[]{}, "", new String[]{}, "");
+        cursor.moveToFirst();
+        int statusCode = cursor.getInt(cursor.getColumnIndex(SecretManagerContract.STATUS_FIELD));
+
+        if (statusCode == SecretManagerContract.STATUS_OK) {
+            Intent intent = new Intent(this, SecretList.class);
+            intent.putExtra(CasketConstants.ROOT_UUID, rootUUID);
+            startActivity(intent);
+        } else {
             /*
-            TODO error
+            TODO implement dialog error
              */
         }
-
-        Intent intent = new Intent(this, SecretList.class);
-        intent.putExtra(CasketConstants.ROOT_UUID, rootUUID);
-        startActivity(intent);
 
     }
 

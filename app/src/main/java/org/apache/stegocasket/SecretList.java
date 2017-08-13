@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -72,17 +73,9 @@ public class SecretList extends AppCompatActivity {
     }
 
     private void sendFlushCommand() {
-        String cntPrefix = "content://" + SecretManagerContract.AUTHORITY;
-        Uri rootTableURI = Uri.parse(cntPrefix + SecretManagerContract.ROOT_PATH);
-        ContentValues values = new ContentValues();
-        values.put(SecretManagerContract.CMD_FIELD, SecretManagerContract.FLUSH_CMD);
 
-        int result = this.getContentResolver().update(rootTableURI, values, "", new String[0]);
-        if (result == 0) {
-            /*
-            TODO error
-             */
-        }
+        LocalBroadcastManager broadcastManager = LocalBroadcastManager.getInstance(this);
+        broadcastManager.sendBroadcastSync(new Intent(SecretManagerContract.FLUSH_INTENT));
 
     }
 
