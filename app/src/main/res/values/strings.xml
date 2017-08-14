@@ -12,10 +12,13 @@
     <string name="repwd_text">Confrim password</string>
     <string name="enter_seckey">Enter secret ID</string>
 
+    <string name="err_dialmsg">Error</string>
     <string name="nocryptofile">Cannot find crypto file</string>
     <string name="errparsecrypto">Error parsing crypto file</string>
     <string name="unknwsecret">Secret unknown</string>
     <string name="nologorpwd">Missing login or password</string>
+    <string name="login_failed">Login failed</string>
+    <string name="pwd_mismatch">Password mismatch</string>
 
     <string name="ok_delete_sec">Delete secret?</string>
     <string name="ok_delete_pro">Delete property?</string>

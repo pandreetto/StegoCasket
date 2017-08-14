@@ -2,6 +2,9 @@ package org.apache.stegocasket;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -12,9 +15,11 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
 
 import org.apache.stegocasket.core.SecretManagerContract;
 
@@ -46,29 +51,11 @@ public class CasketLogin extends AppCompatActivity {
 
         FloatingActionButton fabNew = (FloatingActionButton) findViewById(R.id.fab_new);
         assert fabNew != null;
-        fabNew.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-                intent.addCategory(Intent.CATEGORY_OPENABLE);
-                intent.setType("image/*");
-
-                startActivityForResult(intent, NEW_REQUEST_CODE);
-            }
-        });
+        fabNew.setOnClickListener(new SelectOnClickListener(false));
 
         FloatingActionButton fabLoad = (FloatingActionButton) findViewById(R.id.fab_load);
         assert fabLoad != null;
-        fabLoad.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-                intent.addCategory(Intent.CATEGORY_OPENABLE);
-                intent.setType("image/*");
-
-                startActivityForResult(intent, LOAD_REQUEST_CODE);
-            }
-        });
+        fabLoad.setOnClickListener(new SelectOnClickListener(true));
     }
 
     @Override
@@ -117,21 +104,26 @@ public class CasketLogin extends AppCompatActivity {
         Uri pictureURI = resultData.getData();
         Log.i(TAG, "Selected image " + pictureURI.toString());
 
-        PwdDialogFragment pwdDialog = new PwdDialogFragment();
-        pwdDialog.setCasketLogin(this).setPictureURI(pictureURI);
+        LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
-        if (requestCode == NEW_REQUEST_CODE) {
+        int layRef = requestCode == LOAD_REQUEST_CODE ? R.layout.dialog_pwd : R.layout.dialog_newpwd;
+        final View dialogView = inflater.inflate(layRef, null);
+        builder.setView(dialogView);
 
-            pwdDialog.enableNewPwdMode().show(getFragmentManager(), "NEW_PASSWORD");
+        builder.setPositiveButton(R.string.ok_btn, new PwdOnClickListener(dialogView, pictureURI,
+                requestCode == LOAD_REQUEST_CODE));
 
-        } else {
+        builder.setNegativeButton(R.string.cancel_btn, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                // Nothing to do
+            }
+        });
 
-            pwdDialog.enablePwdMode().show(getFragmentManager(), "ASK_PASSWORD");
-        }
-
+        builder.show();
     }
 
-    public void run(Uri picURI, String pwd, boolean loadMode) {
+    private void initProvider(Uri picURI, String pwd, boolean loadMode) {
 
         /*
         Initialize or reset the content provider
@@ -154,17 +146,93 @@ public class CasketLogin extends AppCompatActivity {
         Cursor cursor = this.getContentResolver().query(registerURI, new String[]{}, "", new String[]{}, "");
         cursor.moveToFirst();
         int statusCode = cursor.getInt(cursor.getColumnIndex(SecretManagerContract.STATUS_FIELD));
+        cursor.close();
 
         if (statusCode == SecretManagerContract.STATUS_OK) {
             Intent intent = new Intent(this, SecretList.class);
             intent.putExtra(CasketConstants.ROOT_UUID, rootUUID);
             startActivity(intent);
         } else {
-            /*
-            TODO implement dialog error
-             */
+
+            showError(R.string.login_failed);
+
         }
 
     }
 
+    private void showError(int strRef) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.err_dialmsg);
+        builder.setMessage(strRef);
+        builder.setPositiveButton(R.string.ok_btn, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                // Nothing to do
+            }
+        });
+
+        AlertDialog errDialog = builder.create();
+        errDialog.show();
+    }
+
+    private class SelectOnClickListener implements View.OnClickListener {
+
+        boolean loadMode;
+
+        SelectOnClickListener(boolean mode) {
+            loadMode = mode;
+        }
+
+        @Override
+        public void onClick(View view) {
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType("image/*");
+
+            if (loadMode) {
+                startActivityForResult(intent, LOAD_REQUEST_CODE);
+            } else {
+                startActivityForResult(intent, NEW_REQUEST_CODE);
+            }
+        }
+    }
+
+    private class PwdOnClickListener implements DialogInterface.OnClickListener {
+
+        private View dialogView;
+
+        private Uri pictureURI;
+
+        private boolean loadMode;
+
+        PwdOnClickListener(View view, Uri pURI, boolean mode) {
+            dialogView = view;
+            pictureURI = pURI;
+            loadMode = mode;
+        }
+
+        @Override
+        public void onClick(DialogInterface dialog, int id) {
+
+            String password;
+
+            if (loadMode) {
+                EditText pwdValue = (EditText) dialogView.findViewById(R.id.pwd_value);
+                password = pwdValue.getText().toString();
+            } else {
+                EditText pwdValue = (EditText) dialogView.findViewById(R.id.newpwd_value);
+                password = pwdValue.getText().toString();
+                EditText rePwdValue = (EditText) dialogView.findViewById(R.id.repwd_value);
+                String confirmPwd = rePwdValue.getText().toString();
+
+                if (!password.equals(confirmPwd)) {
+                    showError(R.string.pwd_mismatch);
+                    return;
+                }
+            }
+
+            initProvider(pictureURI, password, loadMode);
+
+        }
+
+    }
 }
