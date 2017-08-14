@@ -270,6 +270,7 @@ public class SecretManager extends ContentProvider {
 
             GroupOfSecret currGroup = (GroupOfSecret) secretTable.get(gSecUUID);
             currGroup.add(secItem);
+            cacheStatus = CACHE_TOFLUSH;
 
             return uri;
 
