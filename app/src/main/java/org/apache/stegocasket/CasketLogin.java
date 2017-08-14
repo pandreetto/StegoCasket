@@ -144,18 +144,20 @@ public class CasketLogin extends AppCompatActivity {
          */
         Uri registerURI = Uri.parse(SecretManagerContract.REGISTER_URI);
         Cursor cursor = this.getContentResolver().query(registerURI, new String[]{}, "", new String[]{}, "");
-        cursor.moveToFirst();
-        int statusCode = cursor.getInt(cursor.getColumnIndex(SecretManagerContract.STATUS_FIELD));
-        cursor.close();
+        if (cursor != null) {
+            cursor.moveToFirst();
+            int statusCode = cursor.getInt(cursor.getColumnIndex(SecretManagerContract.STATUS_FIELD));
+            cursor.close();
 
-        if (statusCode == SecretManagerContract.STATUS_OK) {
-            Intent intent = new Intent(this, SecretList.class);
-            intent.putExtra(CasketConstants.ROOT_UUID, rootUUID);
-            startActivity(intent);
-        } else {
+            if (statusCode == SecretManagerContract.STATUS_OK) {
+                Intent intent = new Intent(this, SecretList.class);
+                intent.putExtra(CasketConstants.ROOT_UUID, rootUUID);
+                startActivity(intent);
+            } else {
 
-            showError(R.string.login_failed);
+                showError(R.string.login_failed);
 
+            }
         }
 
     }

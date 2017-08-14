@@ -173,7 +173,7 @@ public class SecretManager extends ContentProvider {
                         String selection,
                         String[] selectionArgs,
                         String sortOrder) {
-        if (!uri.getAuthority().equals(SecretManagerContract.AUTHORITY) || cacheStatus == CACHE_IDLE) {
+        if (!uri.getAuthority().equals(SecretManagerContract.AUTHORITY)) {
             return null;
         }
 
@@ -184,6 +184,10 @@ public class SecretManager extends ContentProvider {
             MatrixCursor cursor = new MatrixCursor(columns);
             cursor.addRow(new Object[]{Integer.valueOf(statusCode)});
             return cursor;
+        }
+
+        if (cacheStatus == CACHE_IDLE) {
+            return null;
         }
 
         if (uri.getPath().equals("/" + rootTable)) {
@@ -388,6 +392,7 @@ public class SecretManager extends ContentProvider {
                     try {
 
                         loadSecrets();
+                        statusCode = SecretManagerContract.STATUS_OK;
 
                     } catch (Exception ex) {
                         Log.e(SecretManager.class.getName(), ex.getMessage(), ex);
@@ -396,7 +401,10 @@ public class SecretManager extends ContentProvider {
                     }
 
                 } else {
+
                     initSecrets();
+                    statusCode = SecretManagerContract.STATUS_OK;
+
                 }
 
 
