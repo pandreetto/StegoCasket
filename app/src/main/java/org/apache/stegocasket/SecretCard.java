@@ -68,12 +68,6 @@ public class SecretCard extends AppCompatActivity {
         return secretUUID;
     }
 
-    public void useSecret(String key, String value, String className) {
-        /*
-        TODO implement
-        */
-    }
-
     public void changeSecret(String key, String value, String type) {
 
         final View dialogView = SecretWidgetFactory.getWidget(this, type);

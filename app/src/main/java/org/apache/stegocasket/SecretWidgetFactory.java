@@ -1,23 +1,38 @@
 package org.apache.stegocasket;
 
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.RadioButton;
 
+/*
+This is the entry point class for
+handling different type of secret
+ */
+
 public class SecretWidgetFactory {
+
+    private static final String PROP_SEC = "PropertySecret";
+
+    private static final String PHONE_SEC = "PhoneSecret";
+
+    private static final String MAIL_SEC = "MailSecret";
+
+    private static final String LINK_SEC = "LinkSecret";
 
     public static View getWidget(Context ctx, String type) {
 
         int rDefId = 0;
-        if (type.equals("PropertySecret")) {
+        if (type.equals(PROP_SEC)) {
             rDefId = R.layout.dialog_newprop;
-        } else if (type.equals("PhoneSecret")) {
+        } else if (type.equals(PHONE_SEC)) {
             rDefId = R.layout.dialog_newcall;
-        } else if (type.equals("MailSecret")) {
+        } else if (type.equals(MAIL_SEC)) {
             rDefId = R.layout.dialog_newmail;
-        } else if (type.equals("LinkSecret")) {
+        } else if (type.equals(LINK_SEC)) {
             rDefId = R.layout.dialog_newlink;
         }
 
@@ -66,6 +81,28 @@ public class SecretWidgetFactory {
             }
 
             return inflater.inflate(rDefId, null);
+        }
+    }
+
+    public static void useSecret(Context ctx, String type, String key, String value) {
+        if (type.equals(PROP_SEC)) {
+            /*
+            TODO implement cut&paste
+             */
+        } else if (type.equals(PHONE_SEC)) {
+
+            Uri number = Uri.parse("tel:" + value);
+            Intent callIntent = new Intent(Intent.ACTION_DIAL, number);
+            ctx.startActivity(callIntent);
+
+        } else if (type.equals(MAIL_SEC)) {
+            /*
+            TODO send intent to mail agent
+             */
+        } else if (type.equals(LINK_SEC)) {
+            /*
+            TODO send intent to browser
+             */
         }
     }
 }

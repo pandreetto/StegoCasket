@@ -87,7 +87,9 @@ class SecretCardAdapter extends RecyclerView.Adapter<SecretCardAdapter.ViewHolde
 
         @Override
         public void onClick(View view) {
-            secretCard.useSecret(secKey, secValue, secClass);
+
+            SecretWidgetFactory.useSecret(secretCard, secClass, secKey, secValue);
+
         }
 
         @Override
@@ -108,7 +110,7 @@ class SecretCardAdapter extends RecyclerView.Adapter<SecretCardAdapter.ViewHolde
 
     private synchronized void loadCursor() {
 
-        if(cardCursor==null) {
+        if (cardCursor == null) {
             Uri secretTable = Uri.parse("content://" + SecretManagerContract.AUTHORITY + "/"
                     + secretCard.getSecretUUID());
             cardCursor = secretCard.getContentResolver().query(secretTable, new String[]{}, "",
