@@ -18,7 +18,7 @@ public class SecretWriter {
      */
     public void write(Secret secret) {
         String tmps = secret.toXML();
-        writer.print("<secret class=\"" + secret.getClass().getName() + "\">\n");
+        writer.print("<secret class=\"" + secret.getType() + "\">\n");
         writer.print(tmps);
         writer.print("</secret>\n");
     }

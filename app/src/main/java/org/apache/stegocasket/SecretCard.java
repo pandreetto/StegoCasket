@@ -74,22 +74,11 @@ public class SecretCard extends AppCompatActivity {
         */
     }
 
-    public void changeSecret(String key, String value, String className) {
+    public void changeSecret(String key, String value, String type) {
 
-        int rDefId = 0;
-        if (className.equals("org.apache.stegocasket.core.PropertySecret")) {
-            rDefId = R.layout.dialog_newprop;
-        } else if (className.equals("org.apache.stegocasket.core.PhoneSecret")) {
-            rDefId = R.layout.dialog_newcall;
-        } else if (className.equals("org.apache.stegocasket.core.MailSecret")) {
-            rDefId = R.layout.dialog_newmail;
-        } else if (className.equals("org.apache.stegocasket.core.LinkSecret")) {
-            rDefId = R.layout.dialog_newlink;
-        }
+        final View dialogView = SecretWidgetFactory.getWidget(this, type);
 
-        LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         AlertDialog.Builder builder = new AlertDialog.Builder(SecretCard.this);
-        final View dialogView = inflater.inflate(rDefId, null);
         builder.setView(dialogView);
 
         EditText pNameView = (EditText) dialogView.findViewById(R.id.new_name_cnt);
@@ -169,43 +158,20 @@ public class SecretCard extends AppCompatActivity {
 
     private class ChooserOnClickListener implements View.OnClickListener {
 
-        private LayoutInflater inflater;
-
-        public ChooserOnClickListener() {
-            inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        }
-
         @Override
         public void onClick(View view) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(SecretCard.this);
 
-            final View dialogView = inflater.inflate(R.layout.dialog_sec_chooser, null);
-            builder.setView(dialogView);
+            final SecretWidgetFactory.RadioCombo combo = SecretWidgetFactory.getRadioCombo(SecretCard.this);
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(SecretCard.this);
+            builder.setView(combo.getView());
             builder.setPositiveButton(R.string.ok_btn, new DialogInterface.OnClickListener() {
+
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    int rDefId = 0;
 
-                    RadioButton textRadio = (RadioButton) dialogView.findViewById(R.id.textRadioBtn);
-                    RadioButton mailRadio = (RadioButton) dialogView.findViewById(R.id.mailRadioBtn);
-                    RadioButton callRadio = (RadioButton) dialogView.findViewById(R.id.callRadioBtn);
-                    RadioButton linkRadio = (RadioButton) dialogView.findViewById(R.id.linkRadioBtn);
-
-                    if (textRadio.isChecked()) {
-                        rDefId = R.layout.dialog_newprop;
-                    } else if (mailRadio.isChecked()) {
-                        rDefId = R.layout.dialog_newmail;
-                    } else if (callRadio.isChecked()) {
-                        rDefId = R.layout.dialog_newcall;
-                    } else if (linkRadio.isChecked()) {
-                        rDefId = R.layout.dialog_newlink;
-                    } else {
-                        Log.d(TAG, "Unknown radio option");
-                        return;
-                    }
-
+                    final View dialogView = combo.getSelectedDialog();
                     AlertDialog.Builder eBuilder = new AlertDialog.Builder(SecretCard.this);
-                    final View dialogView = inflater.inflate(rDefId, null);
 
                     eBuilder.setView(dialogView);
                     eBuilder.setPositiveButton(R.string.ok_btn, new EditorOnClickListener(dialogView, true));
@@ -217,6 +183,7 @@ public class SecretCard extends AppCompatActivity {
                     }).show();
 
                 }
+
             }).setNegativeButton(R.string.cancel_btn, new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {

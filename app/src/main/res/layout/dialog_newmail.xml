@@ -23,7 +23,7 @@
         android:textColor="@color/colorPrimary"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:tag="org.apache.stegocasket.core.MailSecret"/>
+        android:tag="MailSecret"/>
 
     <TextView
         android:id="@+id/new_value_title"

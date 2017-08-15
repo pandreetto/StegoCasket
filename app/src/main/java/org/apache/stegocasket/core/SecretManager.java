@@ -219,7 +219,7 @@ public class SecretManager extends ContentProvider {
                 cursor.addRow(new Object[]{
                         rSecret.getId(),
                         rSecret.getValue(),
-                        rSecret.getClass().getName()
+                        rSecret.getType()
                 });
             }
             return cursor;
@@ -265,24 +265,18 @@ public class SecretManager extends ContentProvider {
          */
         String secKey = values.getAsString(SecretManagerContract.SEC_KEY_FIELD);
         String secValue = values.getAsString(SecretManagerContract.SEC_VALUE_FIELD);
-        String secClass = values.getAsString(SecretManagerContract.SEC_TYPE_FIELD);
+        String secType = values.getAsString(SecretManagerContract.SEC_TYPE_FIELD);
 
-        try {
-            RenderableSecret secItem = (RenderableSecret) Class.forName(secClass).newInstance();
-            secItem.setId(secKey);
-            secItem.setValue(secValue);
+        RenderableSecret secItem = new RenderableSecret(secType);
+        secItem.setId(secKey);
+        secItem.setValue(secValue);
 
-            GroupOfSecret currGroup = (GroupOfSecret) secretTable.get(gSecUUID);
-            currGroup.add(secItem);
-            cacheStatus = CACHE_TOFLUSH;
+        GroupOfSecret currGroup = (GroupOfSecret) secretTable.get(gSecUUID);
+        currGroup.add(secItem);
+        cacheStatus = CACHE_TOFLUSH;
 
-            return uri;
+        return uri;
 
-        } catch (Exception ex) {
-            Log.e(TAG, ex.getMessage(), ex);
-        }
-
-        return null;
     }
 
     @Override

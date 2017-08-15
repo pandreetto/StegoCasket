@@ -28,6 +28,10 @@ public class GroupOfSecret
         this.id = id;
     }
 
+    public String getType() {
+        return "GroupOfSecret";
+    }
+
     public void remove(String secId) {
         Secret tmpsec = null;
         for (Secret sec : this) {
@@ -55,17 +59,16 @@ public class GroupOfSecret
             String className = attributes.getValue("class");
 
             // patch for back compatibility
-            if (className.startsWith("oss.crypto.casket")) {
-                className = className.replace("oss.crypto.casket", "org.apache.stegocasket.core");
+            if (className.startsWith("oss.") || className.startsWith("org.")) {
+                className = className.substring(className.lastIndexOf('.') + 1);
             }
 
-            try {
-                currSecret = (Secret) Class.forName(className).newInstance();
-            } catch (Exception ex) {
-                /*
-                 * TODO handle exception
-                 */
+            if (className.equals("GroupOfSecret")) {
+                currSecret = new GroupOfSecret();
+            } else {
+                currSecret = new RenderableSecret(className);
             }
+
         } else {
             currSecret.processStartElement(qName, attributes);
         }
@@ -96,7 +99,7 @@ public class GroupOfSecret
         buff.append("<group id=\"").append(id).append("\"/>\n");
         for (Secret secItem : this) {
             buff.append("<secretitem class=\"");
-            buff.append(secItem.getClass().getName()).append("\">");
+            buff.append(secItem.getType()).append("\">");
             buff.append(secItem.toXML());
             buff.append("</secretitem>\n");
         }

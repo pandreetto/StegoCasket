@@ -1,18 +1,18 @@
 package org.apache.stegocasket.core;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.util.ArrayList;
-
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
+import android.util.Log;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import android.util.Log;
+import java.io.IOException;
+import java.io.Reader;
+import java.util.ArrayList;
+
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 
 public class SecretParser
         extends DefaultHandler {
@@ -55,17 +55,20 @@ public class SecretParser
             String className = attributes.getValue("class");
 
             // patch for back compatibility
-            if (className.startsWith("oss.crypto.casket")) {
-                className = className.replace("oss.crypto.casket", "org.apache.stegocasket.core");
+            if (className.startsWith("oss.") || className.startsWith("org.")) {
+                className = className.substring(className.lastIndexOf('.') + 1);
             }
 
-            try {
-                currSecret = (Secret) Class.forName(className).newInstance();
-            } catch (Exception ex) {
-                throw new SAXParseException(ex.getMessage(), null);
+            if (className.equals("GroupOfSecret")) {
+                currSecret = new GroupOfSecret();
+            } else {
+                currSecret = new RenderableSecret(className);
             }
+
         } else if (!qName.equals("secretlist")) {
+
             currSecret.processStartElement(qName, attributes);
+
         }
     }
 

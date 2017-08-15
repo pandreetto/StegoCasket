@@ -8,6 +8,8 @@ public interface Secret {
 
     public void setId(String id);
 
+    public String getType();
+
     public void processStartElement(String qName, Attributes attributes);
 
     public void processEndElement(String qName);
