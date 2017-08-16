@@ -1,12 +1,15 @@
 package org.apache.stegocasket;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.provider.MediaStore;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.RadioButton;
+import android.widget.Toast;
 
 /*
 This is the entry point class for
@@ -14,6 +17,8 @@ handling different type of secret
  */
 
 public class SecretWidgetFactory {
+
+    private static final String TAG = SecretWidgetFactory.class.getName();
 
     private static final String PROP_SEC = "PropertySecret";
 
@@ -85,24 +90,40 @@ public class SecretWidgetFactory {
     }
 
     public static void useSecret(Context ctx, String type, String key, String value) {
-        if (type.equals(PROP_SEC)) {
-            /*
-            TODO implement cut&paste
-             */
-        } else if (type.equals(PHONE_SEC)) {
 
-            Uri number = Uri.parse("tel:" + value);
-            Intent callIntent = new Intent(Intent.ACTION_DIAL, number);
-            ctx.startActivity(callIntent);
+        switch (type) {
+            case PROP_SEC:
 
-        } else if (type.equals(MAIL_SEC)) {
-            /*
-            TODO send intent to mail agent
-             */
-        } else if (type.equals(LINK_SEC)) {
-            /*
-            TODO send intent to browser
-             */
+                ClipboardManager clipBoard = (ClipboardManager) ctx.getSystemService(Context.CLIPBOARD_SERVICE);
+
+                String clipLabel = "StegoCasket: " + key;
+                ClipData clipData = ClipData.newPlainText(clipLabel, value);
+                clipBoard.setPrimaryClip(clipData);
+
+                Toast.makeText(ctx, clipLabel, Toast.LENGTH_SHORT).show();
+                break;
+
+            case PHONE_SEC:
+
+                Uri number = Uri.parse("tel:" + value);
+                Intent callIntent = new Intent(Intent.ACTION_DIAL, number);
+                ctx.startActivity(callIntent);
+                break;
+
+            case MAIL_SEC:
+                /*
+                TODO send intent to mail agent
+                 */
+                break;
+
+            case LINK_SEC:
+                /*
+                TODO send intent to browser
+                 */
+                break;
+
+            default:
+                Log.e(TAG, "Unknown type " + type);
         }
     }
 }
