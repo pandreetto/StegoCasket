@@ -3,6 +3,7 @@ package org.apache.stegocasket.core;
 import org.xml.sax.Attributes;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 
 public class GroupOfSecret
         extends ArrayList<Secret>
@@ -109,6 +110,15 @@ public class GroupOfSecret
 
     public String toString() {
         return getId();
+    }
+
+    public Comparator<Secret> getComparator() {
+        return new Comparator<Secret>() {
+            @Override
+            public int compare(Secret s1, Secret s2) {
+                return s1.getId().compareTo(s2.getId());
+            }
+        };
     }
 
 }

@@ -24,6 +24,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -191,13 +192,21 @@ public class SecretManager extends ContentProvider {
         }
 
         if (uri.getPath().equals("/" + rootTable)) {
+            ArrayList<SecretTableItem> tmpList = new ArrayList<>(secretTable.size());
+            for (String sUUID : secretTable.keySet()) {
+                tmpList.add(new SecretTableItem(sUUID, secretTable.get(sUUID).getId()));
+            }
+
+            //noinspection Since15
+            tmpList.sort(getComparator());
+
             String[] columns = new String[]{
                     SecretManagerContract.SEC_ID_FIELD,
                     SecretManagerContract.SEC_NAME_FIELD
             };
             MatrixCursor cursor = new MatrixCursor(columns);
-            for (String sUUID : secretTable.keySet()) {
-                cursor.addRow(new Object[]{sUUID, secretTable.get(sUUID).getId()});
+            for (SecretTableItem sItem : tmpList) {
+                cursor.addRow(sItem.getTuple());
             }
             return cursor;
         }
@@ -211,9 +220,7 @@ public class SecretManager extends ContentProvider {
             };
             MatrixCursor cursor = new MatrixCursor(columns);
             GroupOfSecret gSecrets = (GroupOfSecret) secretTable.get(secUUID);
-            /*
-            TODO implement sort
-             */
+
             for (Secret tmpsec : gSecrets) {
                 RenderableSecret rSecret = (RenderableSecret) tmpsec;
                 cursor.addRow(new Object[]{
@@ -273,6 +280,9 @@ public class SecretManager extends ContentProvider {
 
         GroupOfSecret currGroup = (GroupOfSecret) secretTable.get(gSecUUID);
         currGroup.add(secItem);
+        //noinspection Since15
+        currGroup.sort(currGroup.getComparator());
+
         cacheStatus = CACHE_TOFLUSH;
 
         return uri;
@@ -346,11 +356,13 @@ public class SecretManager extends ContentProvider {
                 /*
                 Delete single properties
                  */
+            GroupOfSecret gSecret = (GroupOfSecret) secretTable.get(gSecUUID);
             for (String secName : selectionArgs) {
-                GroupOfSecret gSecret = (GroupOfSecret) secretTable.get(gSecUUID);
                 gSecret.remove(secName);
-                Log.d(TAG, "Deleted property " + secName);
             }
+            //noinspection Since15
+            gSecret.sort(gSecret.getComparator());
+
             cacheStatus = CACHE_TOFLUSH;
             return selectionArgs.length;
 
@@ -416,5 +428,30 @@ public class SecretManager extends ContentProvider {
             }
         }
 
+    }
+
+    private Comparator<SecretTableItem> getComparator() {
+        return new Comparator<SecretTableItem>() {
+            @Override
+            public int compare(SecretTableItem s1, SecretTableItem s2) {
+                return s1.name.compareTo(s2.name);
+            }
+        };
+    }
+
+    private class SecretTableItem {
+
+        private String uuid;
+
+        private String name;
+
+        SecretTableItem(String u, String n) {
+            uuid = u;
+            name = n;
+        }
+
+        public Object[] getTuple() {
+            return new Object[]{uuid, name};
+        }
     }
 }
