@@ -1,29 +1,25 @@
 package org.apache.stegocasket;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ContentValues;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import android.text.InputType;
-import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.RadioButton;
 import android.widget.TextView;
 
 import org.apache.stegocasket.core.SecretManagerContract;
 
-public class SecretCard extends AppCompatActivity {
+public class SecretCard extends Activity {
 
     private static final String TAG = "SecretCard";
 
@@ -36,7 +32,7 @@ public class SecretCard extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_secret_card);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fabadd);
+        FloatingActionButton fab = findViewById(R.id.fabadd);
         assert fab != null;
         fab.setOnClickListener(new ChooserOnClickListener());
 
@@ -47,7 +43,7 @@ public class SecretCard extends AppCompatActivity {
 
         secAdapter = new SecretCardAdapter(this);
 
-        RecyclerView secRecyclerView = (RecyclerView) findViewById(R.id.items_recycler);
+        RecyclerView secRecyclerView = findViewById(R.id.items_recycler);
         assert secRecyclerView != null;
         secRecyclerView.setLayoutManager(secLayoutManager);
         secRecyclerView.setAdapter(secAdapter);
@@ -75,11 +71,11 @@ public class SecretCard extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(SecretCard.this);
         builder.setView(dialogView);
 
-        EditText pNameView = (EditText) dialogView.findViewById(R.id.new_name_cnt);
+        EditText pNameView = dialogView.findViewById(R.id.new_name_cnt);
         pNameView.setText(key);
         pNameView.setInputType(InputType.TYPE_NULL);
 
-        EditText pValueView = (EditText) dialogView.findViewById(R.id.new_value_cnt);
+        EditText pValueView = dialogView.findViewById(R.id.new_value_cnt);
         pValueView.setText(value);
         /*
         TODO set focus on pValueView
@@ -126,7 +122,7 @@ public class SecretCard extends AppCompatActivity {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
 
-                    TextView tView = (TextView) viewHolder.itemView.findViewById(R.id.prop_key);
+                    TextView tView = viewHolder.itemView.findViewById(R.id.prop_key);
                     String secName = tView.getText().toString();
 
                     String secURI = "content://" + SecretManagerContract.AUTHORITY + "/" + secretUUID;
@@ -189,9 +185,9 @@ public class SecretCard extends AppCompatActivity {
 
     private class EditorOnClickListener implements DialogInterface.OnClickListener {
 
-        private View dialogView;
+        private final View dialogView;
 
-        private boolean insertMode;
+        private final boolean insertMode;
 
         public EditorOnClickListener(View dView, boolean inMode) {
 
@@ -201,8 +197,8 @@ public class SecretCard extends AppCompatActivity {
 
         @Override
         public void onClick(DialogInterface dialog, int which) {
-            EditText pNameView = (EditText) dialogView.findViewById(R.id.new_name_cnt);
-            EditText pValueView = (EditText) dialogView.findViewById(R.id.new_value_cnt);
+            EditText pNameView = dialogView.findViewById(R.id.new_name_cnt);
+            EditText pValueView = dialogView.findViewById(R.id.new_value_cnt);
 
             String secURI = "content://" + SecretManagerContract.AUTHORITY + "/" + secretUUID;
             ContentValues values = new ContentValues();

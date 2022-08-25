@@ -13,7 +13,6 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -25,7 +24,7 @@ import org.apache.stegocasket.core.SecretManagerContract;
 
 import java.util.UUID;
 
-public class CasketLogin extends AppCompatActivity {
+public class CasketLogin extends Activity {
 
     private static final String TAG = "CasketLogin";
 
@@ -49,11 +48,11 @@ public class CasketLogin extends AppCompatActivity {
             }
         }
 
-        FloatingActionButton fabNew = (FloatingActionButton) findViewById(R.id.fab_new);
+        FloatingActionButton fabNew = findViewById(R.id.fab_new);
         assert fabNew != null;
         fabNew.setOnClickListener(new SelectOnClickListener(false));
 
-        FloatingActionButton fabLoad = (FloatingActionButton) findViewById(R.id.fab_load);
+        FloatingActionButton fabLoad = findViewById(R.id.fab_load);
         assert fabLoad != null;
         fabLoad.setOnClickListener(new SelectOnClickListener(true));
     }
@@ -146,7 +145,8 @@ public class CasketLogin extends AppCompatActivity {
         Cursor cursor = this.getContentResolver().query(registerURI, new String[]{}, "", new String[]{}, "");
         if (cursor != null) {
             cursor.moveToFirst();
-            int statusCode = cursor.getInt(cursor.getColumnIndex(SecretManagerContract.STATUS_FIELD));
+            int colIdx = cursor.getColumnIndex(SecretManagerContract.STATUS_FIELD);
+            int statusCode = colIdx > 0 ? cursor.getInt(colIdx) : SecretManagerContract.STATUS_ERR;
             cursor.close();
 
             if (statusCode == SecretManagerContract.STATUS_OK) {
@@ -218,12 +218,12 @@ public class CasketLogin extends AppCompatActivity {
             String password;
 
             if (loadMode) {
-                EditText pwdValue = (EditText) dialogView.findViewById(R.id.pwd_value);
+                EditText pwdValue = dialogView.findViewById(R.id.pwd_value);
                 password = pwdValue.getText().toString();
             } else {
-                EditText pwdValue = (EditText) dialogView.findViewById(R.id.newpwd_value);
+                EditText pwdValue = dialogView.findViewById(R.id.newpwd_value);
                 password = pwdValue.getText().toString();
-                EditText rePwdValue = (EditText) dialogView.findViewById(R.id.repwd_value);
+                EditText rePwdValue = dialogView.findViewById(R.id.repwd_value);
                 String confirmPwd = rePwdValue.getText().toString();
 
                 if (!password.equals(confirmPwd)) {

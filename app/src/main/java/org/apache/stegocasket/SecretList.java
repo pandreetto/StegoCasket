@@ -1,5 +1,6 @@
 package org.apache.stegocasket;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ContentValues;
 import android.content.Context;
@@ -9,7 +10,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.ItemTouchHelper;
@@ -22,7 +22,7 @@ import org.apache.stegocasket.core.SecretManagerContract;
 
 import java.util.UUID;
 
-public class SecretList extends AppCompatActivity {
+public class SecretList extends Activity {
 
     private static final String TAG = "SecretList";
 
@@ -37,7 +37,7 @@ public class SecretList extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_secret_list);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        FloatingActionButton fab = findViewById(R.id.fab);
         assert fab != null;
         fab.setOnClickListener(new EditorOnClickListener());
 
@@ -48,7 +48,7 @@ public class SecretList extends AppCompatActivity {
 
         secAdapter = new SecretListAdapter(this);
 
-        secRecyclerView = (RecyclerView) findViewById(R.id.secrets_recycler);
+        secRecyclerView = findViewById(R.id.secrets_recycler);
         assert secRecyclerView != null;
         secRecyclerView.setLayoutManager(secLayoutManager);
         secRecyclerView.setAdapter(secAdapter);
@@ -65,7 +65,7 @@ public class SecretList extends AppCompatActivity {
     }
 
     public void openSecret(View sView) {
-        TextView uView = (TextView) sView.findViewById(R.id.secret_name);
+        TextView uView = sView.findViewById(R.id.secret_name);
         String sUUID = uView.getTag().toString();
         Intent intent = new Intent(this, SecretCard.class);
         intent.putExtra(CasketConstants.SEC_UUID, sUUID);
@@ -92,7 +92,7 @@ public class SecretList extends AppCompatActivity {
 
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    EditText secText = (EditText) dialogView.findViewById(R.id.newsec_value);
+                    EditText secText = dialogView.findViewById(R.id.newsec_value);
 
                     String sgUUID = UUID.randomUUID().toString();
                     String rootURI = "content://" + SecretManagerContract.AUTHORITY + "/" + rootUUID;
@@ -148,7 +148,7 @@ public class SecretList extends AppCompatActivity {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
 
-                    TextView tView = (TextView) viewHolder.itemView.findViewById(R.id.secret_name);
+                    TextView tView = viewHolder.itemView.findViewById(R.id.secret_name);
                     String sgUUID = tView.getTag().toString();
 
                     String rootURI = "content://" + SecretManagerContract.AUTHORITY + "/" + rootUUID;
