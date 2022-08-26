@@ -441,9 +441,9 @@ public class SecretManager extends ContentProvider {
 
     private class SecretTableItem {
 
-        private String uuid;
+        private final String uuid;
 
-        private String name;
+        private final String name;
 
         SecretTableItem(String u, String n) {
             uuid = u;

@@ -3,8 +3,8 @@
     package="org.apache.stegocasket">
 
     <uses-sdk
-        android:minSdkVersion="24"
-        android:targetSdkVersion="24" />
+        android:minSdkVersion="30"
+        android:targetSdkVersion="33" />
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -14,7 +14,6 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
             android:name=".CasketLogin"
@@ -30,7 +29,8 @@
 
         <provider
             android:name=".core.SecretManager"
-            android:authorities="org.apache.stegocasket.provider" />
+            android:authorities="org.apache.stegocasket.provider"
+            android:exported="false"/>
 
         <activity
             android:name=".SecretList"
@@ -39,7 +39,7 @@
         <activity
             android:name=".SecretCard"
             android:label="@string/title_activity_secret_card"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+            android:theme="@style/AppTheme.NoActionBar" />
     </application>
 
 </manifest>

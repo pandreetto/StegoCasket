@@ -146,7 +146,7 @@ public class CasketLogin extends Activity {
         if (cursor != null) {
             cursor.moveToFirst();
             int colIdx = cursor.getColumnIndex(SecretManagerContract.STATUS_FIELD);
-            int statusCode = colIdx > 0 ? cursor.getInt(colIdx) : SecretManagerContract.STATUS_ERR;
+            int statusCode = colIdx >= 0 ? cursor.getInt(colIdx) : SecretManagerContract.STATUS_ERR;
             cursor.close();
 
             if (statusCode == SecretManagerContract.STATUS_OK) {
